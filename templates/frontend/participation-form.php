@@ -1,0 +1,25 @@
+<form class="oasebos-form oasebos-participation-form <?php echo ! empty($basketItems) ? 'oasebos-participation-form--with-basket' : ''; ?>" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+    <input type="hidden" name="action" value="oasebos_participation">
+    <?php wp_nonce_field(\Oasebos\Participations\Security\Nonces::FRONTEND_ACTION, 'oasebos_nonce'); ?>
+    <?php if (empty($projects)): ?><p class="oasebos-message"><?php esc_html_e('Er zijn momenteel geen actieve projecten beschikbaar.', 'oasebos-participations'); ?></p><?php return; endif; ?>
+    <?php if (! empty($basketItems)): ?>
+        <aside class="oasebos-basket oasebos-checkout-basket"><div class="oasebos-basket__header"><strong><?php esc_html_e('Het mandje', 'oasebos-participations'); ?></strong><span><?php echo esc_html((string) array_sum($basketItems)); ?></span></div><ul class="oasebos-basket__items"><?php $basketTotal = 0.0; foreach ($projects as $project): $units = max(1, (int) ($project['_basket_units'] ?? 1)); $totalHectares = $units * (float) $project['unit_size']; $itemTotal = $units * (float) $project['price_per_unit']; $basketTotal += $itemTotal; $itemCost = trim((string) $project['currency'] . ' ' . number_format_i18n($itemTotal, 2)); ?><li><span><?php echo esc_html((string) $project['name']); ?><small><?php echo esc_html(number_format_i18n($totalHectares, 4)); ?> ha</small></span><strong><?php echo esc_html($itemCost); ?></strong></li><input type="hidden" name="project_ids[]" value="<?php echo esc_attr((string) $project['id']); ?>"><input type="hidden" name="project_units[]" value="<?php echo esc_attr((string) $units); ?>"><?php endforeach; ?><li class="oasebos-checkout-basket__total"><span><?php esc_html_e('Totaal', 'oasebos-participations'); ?></span><strong><?php echo esc_html(trim((string) ($projects[0]['currency'] ?? 'EUR') . ' ' . number_format_i18n($basketTotal, 2))); ?></strong></li></ul></aside><div class="oasebos-participation-form__fields">
+    <?php elseif (! empty($showProjectSelector)): ?>
+        <p><label><?php esc_html_e('Project', 'oasebos-participations'); ?><select name="project_id" required><?php foreach ($projects as $project): ?><option value="<?php echo esc_attr($project['id']); ?>"><?php echo esc_html($project['name'] . ' — ' . $project['available_hectares'] . ' ha'); ?></option><?php endforeach; ?></select></label></p>
+    <?php else: $project = reset($projects); ?><input type="hidden" name="project_id" value="<?php echo esc_attr($project['id']); ?>"><p><strong><?php echo esc_html($project['name']); ?></strong> — <?php echo esc_html($project['available_hectares']); ?> ha</p><?php endif; ?>
+    <?php if (empty($basketItems)): ?><p><label><?php esc_html_e('Eenheden', 'oasebos-participations'); ?><input type="number" min="1" name="units" value="<?php echo esc_attr((string) ($basketUnits ?? 1)); ?>" required></label></p><?php endif; ?>
+    <p><label><?php esc_html_e('Voornaam', 'oasebos-participations'); ?><input name="first_name" required></label></p><p><label><?php esc_html_e('Achternaam', 'oasebos-participations'); ?><input name="last_name" required></label></p>
+    <p><label><?php esc_html_e('E-mail', 'oasebos-participations'); ?><input type="email" name="email" required></label></p><p><label><?php esc_html_e('Telefoon', 'oasebos-participations'); ?><input name="phone"></label></p>
+    <p><label><?php esc_html_e('Adres', 'oasebos-participations'); ?><input name="address"></label></p><p><label><?php esc_html_e('Postcode', 'oasebos-participations'); ?><input name="postcode"></label></p>
+    <p><label><?php esc_html_e('Plaats', 'oasebos-participations'); ?><input name="city"></label></p><p><label><?php esc_html_e('Landcode', 'oasebos-participations'); ?><input name="country" value="NL" maxlength="2"></label></p>
+    <p><label class="oasebos-checkbox-label"><input type="checkbox" name="is_gift" value="1" data-oasebos-gift-toggle> <?php esc_html_e('Ik geef deze participatie als cadeau', 'oasebos-participations'); ?></label></p>
+    <fieldset class="oasebos-gift-fields" data-oasebos-gift-fields hidden>
+        <legend><?php esc_html_e('Gegevens ontvanger cadeau', 'oasebos-participations'); ?></legend>
+        <p><label><?php esc_html_e('Voornaam ontvanger', 'oasebos-participations'); ?><input name="gift_first_name" data-oasebos-gift-required></label></p>
+        <p><label><?php esc_html_e('Achternaam ontvanger', 'oasebos-participations'); ?><input name="gift_last_name" data-oasebos-gift-required></label></p>
+        <p><label><?php esc_html_e('E-mail ontvanger', 'oasebos-participations'); ?><input type="email" name="gift_email"></label></p>
+        <p><label><?php esc_html_e('Bericht voor ontvanger', 'oasebos-participations'); ?><textarea name="gift_message" rows="4"></textarea></label></p>
+    </fieldset>
+    <p><button type="submit"><?php esc_html_e('Doorgaan naar betaling', 'oasebos-participations'); ?></button></p>
+    <?php if (! empty($basketItems)): ?></div><?php endif; ?>
+</form>

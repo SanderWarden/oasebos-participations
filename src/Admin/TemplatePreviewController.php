@@ -41,7 +41,7 @@ final class TemplatePreviewController
 
         $payload = $this->previewPayload($_POST);
         $title = (string) ($payload['title'] ?? __('Template preview', 'oasebos-participations'));
-        $html = $this->wrapPreviewDocument((string) $payload['html'], (string) $payload['css'], $title);
+        $html = $this->wrapPreviewDocument((string) $payload['html'], (string) $payload['css'], $title, (string) ($payload['type'] ?? 'agreement'));
 
         $dompdf = $this->createDompdf();
         $dompdf->loadHtml($html, 'UTF-8');
@@ -66,7 +66,7 @@ final class TemplatePreviewController
 
         $_POST['type'] = 'certificate';
         $payload = $this->previewPayload($_POST);
-        $html = $this->wrapPreviewDocument((string) $payload['html'], (string) $payload['css'], __('Certificaat export', 'oasebos-participations'));
+        $html = $this->wrapPreviewDocument((string) $payload['html'], (string) $payload['css'], __('Certificaat export', 'oasebos-participations'), 'certificate');
 
         $dompdf = $this->createDompdf();
         $dompdf->loadHtml($html, 'UTF-8');
@@ -131,9 +131,29 @@ final class TemplatePreviewController
         };
     }
 
-    private function wrapPreviewDocument(string $html, string $css, string $title): string
+    private function wrapPreviewDocument(string $html, string $css, string $title, string $type): string
     {
-        return '<!doctype html><html><head><meta charset="utf-8"><title>' . esc_html($title) . '</title><style>' . $css . $this->dompdfCertificateCss() . '</style></head><body>' . $html . '</body></html>';
+        $bodyClass = 'agreement' === $type ? 'agreement' : ('certificate' === $type ? 'certificate' : 'template-preview');
+        $supportCss = 'agreement' === $type ? $this->dompdfAgreementCss() : $this->dompdfCertificateCss();
+        return '<!doctype html><html><head><meta charset="utf-8"><title>' . esc_html($title) . '</title><style>' . $css . $supportCss . '</style></head><body class="' . esc_attr($bodyClass) . '">' . $html . '</body></html>';
+    }
+
+    private function dompdfAgreementCss(): string
+    {
+        return '
+@page { size: A4 portrait; margin: 20mm; }
+@page oasebos-agreement { size: A4 portrait; margin: 20mm; }
+html, body { margin: 0 !important; padding: 0 !important; }
+body.agreement { page: oasebos-agreement; }
+.agreement-template { width: 170mm !important; margin: 0 auto !important; }
+.agreement-logo { width: 42mm !important; height: 22mm !important; margin: 0 auto 7mm !important; padding: 0 !important; background: transparent !important; border: 0 !important; line-height: 0 !important; font-size: 0 !important; box-sizing: border-box !important; }
+.agreement-logo img { display: block !important; width: 42mm !important; height: auto !important; max-width: 42mm !important; max-height: 22mm !important; margin: 0 auto !important; border: 0 !important; }
+.agreement-template h1, .agreement-template h2, .agreement-template h3 { page-break-after: avoid !important; }
+.agreement-template p, .agreement-template li { orphans: 3; widows: 3; }
+.agreement-meta, .signature-grid, .land-unit-table tr { page-break-inside: avoid !important; }
+.land-unit-table table { page-break-inside: auto !important; }
+.oasebos-page-break, .page-break, .agreement-page-break, [data-page-break="before"] { display: block !important; height: 0 !important; margin: 0 !important; padding: 0 !important; page-break-before: always !important; }
+';
     }
 
     private function normalizeCertificateImages(string $html): string
@@ -149,6 +169,7 @@ final class TemplatePreviewController
     private function normalizeAgreementImages(string $html): string
     {
         $html = $this->inlineLocalImages($html);
+        $html = $this->normalizeImageBox($html, 'logo-placeholder agreement-logo', '42mm', '22mm');
         return $this->normalizeImageBox($html, 'signature-placeholder', '58mm', '16mm');
     }
 
@@ -252,7 +273,7 @@ body { background: #ededed !important; }
 .quality-mark-spacer { width: 6mm !important; }
 .mark-placeholder.anbi { display: block !important; position: absolute !important; left: 0 !important; right: auto !important; bottom: 0 !important; width: 18mm !important; height: 15mm !important; padding-top: 4mm !important; box-sizing: border-box !important; overflow: hidden !important; }
 .mark-placeholder.cbf { display: block !important; position: absolute !important; left: 24mm !important; right: auto !important; bottom: 0 !important; width: 34mm !important; height: 15mm !important; padding-top: 4mm !important; box-sizing: border-box !important; overflow: hidden !important; }
-.mark-placeholder.has-image { padding: 0 !important; background: transparent !important; border: 0 !important; line-height: 0 !important; font-size: 0 !important; }
+.mark-placeholder.has-image { padding: 0 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; line-height: 0 !important; font-size: 0 !important; }
 .signature-placeholder.has-image img { display: block !important; width: 58mm !important; height: auto !important; max-width: 58mm !important; max-height: 16mm !important; margin: 0 auto !important; }
 .logo-placeholder.has-image img { display: block !important; width: 42mm !important; height: auto !important; max-width: 42mm !important; max-height: 22mm !important; margin: 0 auto !important; }
 .mark-placeholder.anbi.has-image img { display: block !important; width: 18mm !important; height: auto !important; max-width: 18mm !important; max-height: 15mm !important; margin: 0 auto !important; }
@@ -267,7 +288,7 @@ body { background: #ededed !important; }
 .oasebos-pdf-preview-page .quality-marks { position: absolute !important; right: 8mm !important; bottom: 6mm !important; width: 58mm !important; height: 16mm !important; overflow: visible !important; }
 .oasebos-pdf-preview-page .mark-placeholder.anbi { display: block !important; position: absolute !important; left: 0 !important; right: auto !important; bottom: 0 !important; width: 18mm !important; height: 15mm !important; padding-top: 4mm !important; box-sizing: border-box !important; overflow: hidden !important; }
 .oasebos-pdf-preview-page .mark-placeholder.cbf { display: block !important; position: absolute !important; left: 24mm !important; right: auto !important; bottom: 0 !important; width: 34mm !important; height: 15mm !important; padding-top: 4mm !important; box-sizing: border-box !important; overflow: hidden !important; }
-.oasebos-pdf-preview-page .mark-placeholder.has-image { padding: 0 !important; background: transparent !important; border: 0 !important; line-height: 0 !important; font-size: 0 !important; }
+.oasebos-pdf-preview-page .mark-placeholder.has-image { padding: 0 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; line-height: 0 !important; font-size: 0 !important; }
 .oasebos-pdf-preview-page .logo-placeholder.has-image img { display: block !important; width: 42mm !important; height: auto !important; max-width: 42mm !important; max-height: 22mm !important; margin: 0 auto !important; }
 .oasebos-pdf-preview-page .mark-placeholder.anbi.has-image img { display: block !important; width: 18mm !important; height: auto !important; max-width: 18mm !important; max-height: 15mm !important; margin: 0 auto !important; }
 .oasebos-pdf-preview-page .mark-placeholder.cbf.has-image img { display: block !important; width: 34mm !important; height: auto !important; max-width: 34mm !important; max-height: 15mm !important; margin: 0 auto !important; }

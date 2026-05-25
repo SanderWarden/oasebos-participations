@@ -259,13 +259,13 @@ final class ParticipationService
 
     <div class="signature-grid">
         <div>
-            <p>Aldus overeengekomen namens [organization_name],</p>
+            <p>Aldus overeengekomen <br>namens [organization_name],</p>
             <div class="signature-placeholder">Signature SVG<br>placeholder</div>
             <p class="signature-line"></p>
             <p>P.C.J. Mols<br>Voorzitter [organization_name]</p>
         </div>
         <div>
-            <p>Aldus overeengekomen door Participant,</p>
+            <p>Aldus overeengekomen <br>door Participant,</p>
             <div class="signature-placeholder signature-placeholder--spacer"></div>
             <p class="signature-line"></p>
             <p>[participant_full_name]</p>

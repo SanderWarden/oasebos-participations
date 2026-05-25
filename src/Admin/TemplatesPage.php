@@ -83,7 +83,7 @@ final class TemplatesPage extends BasePage
             }
             echo '</div>';
             echo '<div class="oasebos-template-preview-status" data-oasebos-template-preview-status aria-live="polite"></div>';
-            echo '<div class="oasebos-pdf-preview-shell"><div class="oasebos-pdf-preview-page" data-oasebos-template-preview-page><style data-oasebos-template-preview-style>' . esc_html($initialCss) . '</style><div data-oasebos-template-preview-title class="oasebos-pdf-preview-title">Voorbeeld</div><div data-oasebos-template-preview-content>' . $renderer->render($initialContent, $renderer->sampleContext(), 'pdf') . '</div></div></div>';
+            echo '<style data-oasebos-template-preview-style>' . esc_html($initialCss) . '</style><div class="oasebos-pdf-preview-shell" data-oasebos-template-preview-shell><div class="oasebos-pdf-preview-page" data-oasebos-template-preview-page><div data-oasebos-template-preview-title class="oasebos-pdf-preview-title">Voorbeeld</div><div class="oasebos-pdf-preview-content" data-oasebos-template-preview-content>' . $renderer->render($initialContent, $renderer->sampleContext(), 'pdf') . '</div></div></div>';
         });
         echo '</main><aside class="oasebos-edit-sidebar">';
         $this->card('Opslaan', function (): void { submit_button('Template opslaan', 'primary large', 'submit', false); }, 'oasebos-sticky-card');
@@ -133,6 +133,7 @@ final class TemplatesPage extends BasePage
     private function defaultAgreementContent(): string
     {
         return '<div class="agreement-template">
+    <div class="logo-placeholder agreement-logo has-image"><img src="' . self::OASEBOS_LOGO_URL . '" alt="Oasebos" width="190" height="96"></div>
     <h1>Participatieovereenkomst</h1>
     <p class="agreement-meta"><strong>Participatienummer:</strong> [participation_number]<br><strong>Datum overeenkomst:</strong> [agreement_date]</p>
 
@@ -189,13 +190,13 @@ final class TemplatesPage extends BasePage
 
     <div class="signature-grid">
         <div>
-            <p>Aldus overeengekomen namens [organization_name],</p>
+            <p>Aldus overeengekomen <br>namens [organization_name],</p>
             <div class="signature-placeholder">Signature SVG<br>placeholder</div>
             <p class="signature-line"></p>
             <p>P.C.J. Mols<br>Voorzitter [organization_name]</p>
         </div>
         <div>
-            <p>Aldus overeengekomen door Participant,</p>
+            <p>Aldus overeengekomen <br>door Participant,</p>
             <div class="signature-placeholder signature-placeholder--spacer"></div>
             <p class="signature-line"></p>
             <p>[participant_full_name]</p>
@@ -206,7 +207,7 @@ final class TemplatesPage extends BasePage
 
     private function defaultAgreementCss(): string
     {
-        return '.agreement-template{font-family:DejaVu Sans,Arial,sans-serif;font-size:10.5pt;line-height:1.45;color:#222}.agreement-template h1{font-size:20pt;margin:0 0 8mm;color:#2f5f2f}.agreement-template h2{font-size:13pt;margin:7mm 0 3mm;color:#2f5f2f}.agreement-template h3{font-size:11.5pt;margin:5mm 0 2mm;color:#333}.agreement-template p{margin:0 0 3mm}.agreement-meta{padding:4mm;background:#f3f7ef;border-left:1.5mm solid #8cc31b}.considerations{margin:0 0 4mm 6mm;padding:0}.considerations li{margin-bottom:2.5mm}.land-unit-table table{width:100%;border-collapse:collapse;margin:3mm 0 5mm}.land-unit-table th,.land-unit-table td{border:0.2mm solid #bbb;padding:2mm;text-align:left}.signature-grid{display:table;width:100%;margin-top:12mm;page-break-inside:avoid}.signature-grid>div{display:table-cell;width:50%;padding-right:8mm;vertical-align:top}.agreement-template .signature-placeholder{width:58mm;height:16mm;margin:5mm 0 0;padding-top:4mm;background:#d7d7d7;border:0.5mm dashed #b7b7b7;border-radius:2mm;color:#7d7d7d;font-size:9px;line-height:1.3;font-weight:bold;text-align:center;text-transform:uppercase;box-sizing:border-box;overflow:hidden}.agreement-template .signature-placeholder--spacer{visibility:hidden}.agreement-template .signature-placeholder.has-image{padding:0;background:transparent;border:0;line-height:0;font-size:0}.agreement-template .signature-placeholder.has-image img{display:block;width:auto;height:auto;max-width:58mm;max-height:16mm;margin:0;border:0}.signature-line{height:18mm;border-bottom:0.3mm solid #555;margin:0 0 3mm}.agreement-template .signature-placeholder+.signature-line{height:0;margin:1mm 0 3mm}';
+        return '@page{size:A4 portrait;margin:20mm}html,body{margin:0;padding:0}.agreement{page-break-before:always}.agreement,.agreement-template{font-family:DejaVu Sans,Arial,sans-serif;font-size:10.5pt;line-height:1.45;color:#222}.agreement-template{width:170mm;margin:0 auto}.agreement-template *{box-sizing:border-box}.agreement-logo{width:42mm;height:22mm;margin:0 auto 7mm;padding:0;background:transparent;border:0;line-height:0;font-size:0;box-sizing:border-box}.agreement-logo img{display:block;width:42mm;height:auto;max-width:42mm;max-height:22mm;margin:0 auto;border:0}.agreement-template h1{font-size:20pt;margin:0 0 8mm;color:#2f5f2f;page-break-after:avoid}.agreement-template h2{font-size:13pt;margin:7mm 0 3mm;color:#2f5f2f;page-break-after:avoid}.agreement-template h3{font-size:11.5pt;margin:5mm 0 2mm;color:#333;page-break-after:avoid}.agreement-template p{margin:0 0 3mm}.agreement-meta{padding:4mm;background:#f3f7ef;border-left:1.5mm solid #8cc31b;page-break-inside:avoid}.considerations{margin:0 0 4mm 6mm;padding:0}.considerations li{margin-bottom:2.5mm}.land-unit-table{page-break-inside:avoid}.land-unit-table table{width:100%;border-collapse:collapse;margin:3mm 0 5mm;page-break-inside:auto}.land-unit-table tr{page-break-inside:avoid;page-break-after:auto}.land-unit-table th,.land-unit-table td{border:0.2mm solid #bbb;padding:2mm;text-align:left}.signature-grid{display:table;width:100%;margin-top:12mm;page-break-inside:avoid;break-inside:avoid}.signature-grid>div{display:table-cell;width:50%;padding-right:8mm;vertical-align:top}.agreement-template .signature-placeholder{width:58mm;height:16mm;margin:5mm 0 0;padding-top:4mm;background:#d7d7d7;border:0.5mm dashed #b7b7b7;border-radius:2mm;color:#7d7d7d;font-size:9px;line-height:1.3;font-weight:bold;text-align:center;text-transform:uppercase;box-sizing:border-box;overflow:hidden}.agreement-template .signature-placeholder--spacer{visibility:hidden}.agreement-template .signature-placeholder.has-image{padding:0;background:transparent;border:0;line-height:0;font-size:0}.agreement-template .signature-placeholder.has-image img{display:block;width:auto;height:auto;max-width:58mm;max-height:16mm;margin:0;border:0}.signature-line{height:18mm;border-bottom:0.3mm solid #555;margin:0 0 3mm}.agreement-template .signature-placeholder+.signature-line{height:0;margin:1mm 0 3mm}.oasebos-page-break,.page-break,.agreement-page-break{display:block;height:0;margin:0;padding:0;page-break-before:always;break-before:page}';
     }
 
     private function renderList(array $templates): void
@@ -522,6 +523,7 @@ body {
   padding: 0 !important;
   background: transparent !important;
   border: 0 !important;
+  border-radius: 0 !important;
   overflow: hidden !important;
   line-height: 0 !important;
   font-size: 0 !important;

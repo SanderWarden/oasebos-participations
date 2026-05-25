@@ -14,7 +14,7 @@ final class PdfService
         if (! is_dir($dir) || ! is_writable($dir)) { return null; }
         $safeNumber = sanitize_file_name($participation['participation_number'] ?? ('participation-' . time()));
         $path = $dir . '/' . $safeNumber . '-' . wp_generate_password(12, false, false) . '.pdf';
-        $html = '<html><head><meta charset="utf-8"><style>' . $css . $this->dompdfCertificateCss() . '.oasebos-page-break{page-break-before:always}</style></head><body><section class="certificate">' . $this->normalizeCertificateImages($certificateHtml) . '</section><section class="oasebos-page-break agreement">' . $this->normalizeAgreementImages($agreementHtml) . '</section></body></html>';
+        $html = '<html><head><meta charset="utf-8"><style>' . $css . $this->dompdfCertificateCss() . $this->dompdfAgreementCss() . '</style></head><body><section class="certificate">' . $this->normalizeCertificateImages($certificateHtml) . '</section><section class="oasebos-page-break agreement">' . $this->normalizeAgreementImages($agreementHtml) . '</section></body></html>';
         if (class_exists('\Dompdf\Dompdf')) {
             $dompdf = $this->createDompdf($upload);
             $dompdf->loadHtml($html, 'UTF-8');
@@ -59,6 +59,7 @@ final class PdfService
     private function normalizeAgreementImages(string $html): string
     {
         $html = $this->inlineLocalImages($html);
+        $html = $this->normalizeImageBox($html, 'logo-placeholder agreement-logo', '42mm', '22mm');
         return $this->normalizeImageBox($html, 'signature-placeholder', '58mm', '16mm');
     }
 
@@ -138,8 +139,9 @@ final class PdfService
     {
         return '
 @page { size: A4 portrait; margin: 0; }
+@page oasebos-certificate { size: A4 portrait; margin: 0; }
 html, body { margin: 0 !important; padding: 0 !important; }
-.certificate { margin: 0 !important; padding: 0 !important; width: 210mm !important; height: 297mm !important; overflow: hidden !important; background: #ededed !important; }
+.certificate { page: oasebos-certificate; margin: 0 !important; padding: 0 !important; width: 210mm !important; height: 297mm !important; overflow: hidden !important; background: #ededed !important; }
 .certificate-page { position: relative !important; width: 210mm !important; height: 297mm !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; background: #ededed !important; box-sizing: border-box !important; page-break-after: avoid !important; }
 .certificate-card { position: absolute !important; left: 20mm !important; top: 20mm !important; width: 144mm !important; height: 240mm !important; margin: 0 !important; padding: 10mm 13mm 7mm !important; overflow: hidden !important; background: #fff !important; border-radius: 5mm !important; box-sizing: content-box !important; }
 .certificate-title { margin: 0 0 7mm !important; font-size: 24px !important; line-height: 1.16 !important; }
@@ -161,11 +163,27 @@ html, body { margin: 0 !important; padding: 0 !important; }
 .quality-mark-spacer { width: 6mm !important; }
 .mark-placeholder.anbi { display: block !important; position: absolute !important; left: 0 !important; right: auto !important; bottom: 0 !important; width: 18mm !important; height: 15mm !important; padding-top: 4mm !important; box-sizing: border-box !important; overflow: hidden !important; }
 .mark-placeholder.cbf { display: block !important; position: absolute !important; left: 24mm !important; right: auto !important; bottom: 0 !important; width: 34mm !important; height: 15mm !important; padding-top: 4mm !important; box-sizing: border-box !important; overflow: hidden !important; }
-.mark-placeholder.has-image { padding: 0 !important; background: transparent !important; border: 0 !important; line-height: 0 !important; font-size: 0 !important; }
+.mark-placeholder.has-image { padding: 0 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; line-height: 0 !important; font-size: 0 !important; }
 .signature-placeholder.has-image img { display: block !important; width: 58mm !important; height: auto !important; max-width: 58mm !important; max-height: 16mm !important; margin: 0 auto !important; }
 .logo-placeholder.has-image img { display: block !important; width: 42mm !important; height: auto !important; max-width: 42mm !important; max-height: 22mm !important; margin: 0 auto !important; }
 .mark-placeholder.anbi.has-image img { display: block !important; width: 18mm !important; height: auto !important; max-width: 18mm !important; max-height: 15mm !important; margin: 0 auto !important; }
 .mark-placeholder.cbf.has-image img { display: block !important; width: 34mm !important; height: auto !important; max-width: 34mm !important; max-height: 15mm !important; margin: 0 auto !important; }
+';
+    }
+
+    private function dompdfAgreementCss(): string
+    {
+        return '
+@page oasebos-agreement { size: A4 portrait; margin: 20mm; }
+.agreement { page: oasebos-agreement; page-break-before: always !important; }
+.agreement .agreement-template { width: 170mm !important; margin: 0 auto !important; }
+.agreement-logo { width: 42mm !important; height: 22mm !important; margin: 0 auto 7mm !important; padding: 0 !important; background: transparent !important; border: 0 !important; line-height: 0 !important; font-size: 0 !important; box-sizing: border-box !important; }
+.agreement-logo img { display: block !important; width: 42mm !important; height: auto !important; max-width: 42mm !important; max-height: 22mm !important; margin: 0 auto !important; border: 0 !important; }
+.agreement-template h1, .agreement-template h2, .agreement-template h3 { page-break-after: avoid !important; }
+.agreement-template p, .agreement-template li { orphans: 3; widows: 3; }
+.agreement-meta, .signature-grid, .land-unit-table tr { page-break-inside: avoid !important; }
+.land-unit-table table { page-break-inside: auto !important; }
+.oasebos-page-break, .page-break, .agreement-page-break, [data-page-break="before"] { display: block !important; height: 0 !important; margin: 0 !important; padding: 0 !important; page-break-before: always !important; }
 ';
     }
 }

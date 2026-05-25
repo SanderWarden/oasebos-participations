@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const previewContent = form.querySelector('[data-oasebos-template-preview-content]');
   const previewStyle = form.querySelector('[data-oasebos-template-preview-style]');
   const previewTitle = form.querySelector('[data-oasebos-template-preview-title]');
+  const previewShell = form.querySelector('[data-oasebos-template-preview-shell]');
   const status = form.querySelector('[data-oasebos-template-preview-status]');
   const name = field('name');
   const resetAgreementTemplate = form.querySelector('[data-oasebos-reset-agreement-template]');
@@ -89,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let controller = null;
   let lastType = type ? type.value : '';
   let templateTouched = Boolean(content && content.value.trim());
+  let previewHtml = previewContent ? previewContent.innerHTML : '';
 
   const setStatus = (message, isError = false) => {
     if (!status) return;
@@ -97,7 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const updatePreview = () => {
-    if (!previewContent || !content || !css || !type || typeof oasebosAdmin === 'undefined') return;
+    const activePreviewContent = form.querySelector('[data-oasebos-template-preview-content]');
+    if (!activePreviewContent || !content || !css || !type || typeof oasebosAdmin === 'undefined') return;
     if (controller) controller.abort();
     controller = new AbortController();
     setStatus('Preview laden…');
@@ -121,15 +124,113 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!response || !response.success) {
           throw new Error(response && response.data && response.data.message ? response.data.message : oasebosAdmin.previewError);
         }
-        previewContent.innerHTML = response.data.html || '';
+        previewHtml = response.data.html || '';
+        activePreviewContent.innerHTML = previewHtml;
         if (previewStyle) previewStyle.textContent = response.data.css || '';
         if (previewTitle) previewTitle.textContent = response.data.title || 'Preview';
+        paginateAgreementPreview();
         setStatus('Preview bijgewerkt.');
       })
       .catch((error) => {
         if (error.name === 'AbortError') return;
         setStatus(error.message || oasebosAdmin.previewError || 'Preview kon niet worden geladen.', true);
       });
+  };
+
+  const createPreviewPage = (pageNumber, titleText) => {
+    const page = document.createElement('div');
+    page.className = 'oasebos-pdf-preview-page';
+    page.setAttribute('data-oasebos-template-preview-page', '');
+
+    const titleElement = document.createElement('div');
+    titleElement.className = 'oasebos-pdf-preview-title';
+    titleElement.textContent = titleText || 'Overeenkomst preview';
+    page.appendChild(titleElement);
+
+    const contentElement = document.createElement('div');
+    contentElement.className = 'oasebos-pdf-preview-content';
+    if (1 === pageNumber) contentElement.setAttribute('data-oasebos-template-preview-content', '');
+    page.appendChild(contentElement);
+
+    const agreementElement = document.createElement('div');
+    agreementElement.className = 'agreement-template';
+    contentElement.appendChild(agreementElement);
+
+    const numberElement = document.createElement('div');
+    numberElement.className = 'oasebos-pdf-preview-page-number';
+    numberElement.textContent = `Pagina ${pageNumber}`;
+    page.appendChild(numberElement);
+
+    return { page, contentElement, agreementElement };
+  };
+
+  const elementForPageBreak = (element) => {
+    if (!element || element.nodeType !== Node.ELEMENT_NODE) return false;
+    return element.classList.contains('oasebos-page-break')
+      || element.classList.contains('page-break')
+      || element.classList.contains('agreement-page-break')
+      || element.getAttribute('data-page-break') === 'before';
+  };
+
+  const paginateAgreementPreview = () => {
+    const activePreviewContent = form.querySelector('[data-oasebos-template-preview-content]');
+    const activePreviewTitle = form.querySelector('[data-oasebos-template-preview-title]');
+    if (!previewShell || !activePreviewContent || !type) return;
+
+    if ('agreement' !== type.value) {
+      previewShell.classList.remove('is-agreement-paginated');
+      if (!previewShell.contains(activePreviewContent) || previewShell.querySelectorAll('.oasebos-pdf-preview-page').length !== 1) {
+        previewShell.innerHTML = '';
+        const page = document.createElement('div');
+        page.className = 'oasebos-pdf-preview-page';
+        page.setAttribute('data-oasebos-template-preview-page', '');
+        const titleElement = activePreviewTitle || document.createElement('div');
+        titleElement.className = 'oasebos-pdf-preview-title';
+        titleElement.setAttribute('data-oasebos-template-preview-title', '');
+        titleElement.textContent = titleElement.textContent || 'Preview';
+        page.appendChild(titleElement);
+        activePreviewContent.innerHTML = previewHtml;
+        page.appendChild(activePreviewContent);
+        previewShell.appendChild(page);
+      }
+      return;
+    }
+
+    previewShell.classList.add('is-agreement-paginated');
+
+    const source = document.createElement('div');
+    source.innerHTML = previewHtml;
+    const sourceAgreement = source.querySelector('.agreement-template');
+    const paginatedNodes = sourceAgreement ? Array.from(sourceAgreement.childNodes) : Array.from(source.childNodes);
+    const titleText = activePreviewTitle ? activePreviewTitle.textContent : 'Overeenkomst preview';
+    previewShell.innerHTML = '';
+
+    const createPage = () => {
+      const pageNumber = previewShell.querySelectorAll('.oasebos-pdf-preview-page:not(.is-measuring)').length + 1;
+      const page = createPreviewPage(pageNumber, titleText);
+      previewShell.appendChild(page.page);
+      return page;
+    };
+
+    let current = createPage();
+    paginatedNodes.forEach((node) => {
+      if (elementForPageBreak(node) && current.agreementElement.childNodes.length > 0) {
+        current = createPage();
+        return;
+      }
+
+      current.agreementElement.appendChild(node.cloneNode(true));
+      if (current.contentElement.scrollHeight > current.contentElement.clientHeight && current.agreementElement.childNodes.length > 1) {
+        current.agreementElement.removeChild(current.agreementElement.lastChild);
+        current = createPage();
+        current.agreementElement.appendChild(node.cloneNode(true));
+      }
+    });
+
+    const firstContent = previewShell.querySelector('[data-oasebos-template-preview-content]');
+    if (firstContent && firstContent !== activePreviewContent) {
+      activePreviewContent.innerHTML = firstContent.innerHTML;
+    }
   };
 
   const schedulePreview = () => {

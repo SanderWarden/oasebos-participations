@@ -90,6 +90,8 @@ final class TemplatePreviewController
         if ('certificate' === $type) {
             $rendered = $this->normalizeCertificateImages($rendered);
             $css .= $this->certificatePreviewCss();
+        } elseif ('agreement' === $type) {
+            $rendered = $this->normalizeAgreementImages($rendered);
         }
 
         return [
@@ -142,6 +144,12 @@ final class TemplatePreviewController
         $html = $this->normalizeImageBox($html, 'mark-placeholder anbi', '18mm', '15mm');
         $html = $this->normalizeImageBox($html, 'mark-placeholder cbf', '34mm', '15mm');
         return $html;
+    }
+
+    private function normalizeAgreementImages(string $html): string
+    {
+        $html = $this->inlineLocalImages($html);
+        return $this->normalizeImageBox($html, 'signature-placeholder', '58mm', '16mm');
     }
 
     private function inlineLocalImages(string $html): string

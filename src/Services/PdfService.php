@@ -14,7 +14,7 @@ final class PdfService
         if (! is_dir($dir) || ! is_writable($dir)) { return null; }
         $safeNumber = sanitize_file_name($participation['participation_number'] ?? ('participation-' . time()));
         $path = $dir . '/' . $safeNumber . '-' . wp_generate_password(12, false, false) . '.pdf';
-        $html = '<html><head><meta charset="utf-8"><style>' . $css . $this->dompdfCertificateCss() . '.oasebos-page-break{page-break-before:always}</style></head><body><section class="certificate">' . $this->normalizeCertificateImages($certificateHtml) . '</section><section class="oasebos-page-break agreement">' . $agreementHtml . '</section></body></html>';
+        $html = '<html><head><meta charset="utf-8"><style>' . $css . $this->dompdfCertificateCss() . '.oasebos-page-break{page-break-before:always}</style></head><body><section class="certificate">' . $this->normalizeCertificateImages($certificateHtml) . '</section><section class="oasebos-page-break agreement">' . $this->normalizeAgreementImages($agreementHtml) . '</section></body></html>';
         if (class_exists('\Dompdf\Dompdf')) {
             $dompdf = $this->createDompdf($upload);
             $dompdf->loadHtml($html, 'UTF-8');
@@ -54,6 +54,12 @@ final class PdfService
         $html = $this->normalizeImageBox($html, 'mark-placeholder cbf', '34mm', '15mm');
         $html = preg_replace('/<div class="quality-marks">\s*(<div class="mark-placeholder anbi has-image">[\s\S]*?<\/div>)\s*(<div class="mark-placeholder cbf has-image">[\s\S]*?<\/div>)\s*<\/div>/', '<table class="quality-marks-table" cellpadding="0" cellspacing="0"><tr><td class="quality-mark-cell anbi-cell">$1</td><td class="quality-mark-spacer"></td><td class="quality-mark-cell cbf-cell">$2</td></tr></table>', $html) ?? $html;
         return $html;
+    }
+
+    private function normalizeAgreementImages(string $html): string
+    {
+        $html = $this->inlineLocalImages($html);
+        return $this->normalizeImageBox($html, 'signature-placeholder', '58mm', '16mm');
     }
 
     private function inlineLocalImages(string $html): string

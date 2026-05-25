@@ -260,11 +260,13 @@ final class ParticipationService
     <div class="signature-grid">
         <div>
             <p>Aldus overeengekomen namens [organization_name],</p>
+            <div class="signature-placeholder">Signature SVG<br>placeholder</div>
             <p class="signature-line"></p>
             <p>P.C.J. Mols<br>Voorzitter [organization_name]</p>
         </div>
         <div>
             <p>Aldus overeengekomen door Participant,</p>
+            <div class="signature-placeholder signature-placeholder--spacer"></div>
             <p class="signature-line"></p>
             <p>[participant_full_name]</p>
         </div>
@@ -274,7 +276,7 @@ final class ParticipationService
 
     private function defaultAgreementCss(): string
     {
-        return '.agreement-template{font-family:DejaVu Sans,Arial,sans-serif;font-size:10.5pt;line-height:1.45;color:#222}.agreement-template h1{font-size:20pt;margin:0 0 8mm;color:#2f5f2f}.agreement-template h2{font-size:13pt;margin:7mm 0 3mm;color:#2f5f2f}.agreement-template h3{font-size:11.5pt;margin:5mm 0 2mm;color:#333}.agreement-template p{margin:0 0 3mm}.agreement-meta{padding:4mm;background:#f3f7ef;border-left:1.5mm solid #8cc31b}.considerations{margin:0 0 4mm 6mm;padding:0}.considerations li{margin-bottom:2.5mm}.land-unit-table table{width:100%;border-collapse:collapse;margin:3mm 0 5mm}.land-unit-table th,.land-unit-table td{border:0.2mm solid #bbb;padding:2mm;text-align:left}.signature-grid{display:table;width:100%;margin-top:12mm;page-break-inside:avoid}.signature-grid>div{display:table-cell;width:50%;padding-right:8mm;vertical-align:top}.signature-line{height:18mm;border-bottom:0.3mm solid #555;margin:8mm 0 3mm}';
+        return '.agreement-template{font-family:DejaVu Sans,Arial,sans-serif;font-size:10.5pt;line-height:1.45;color:#222}.agreement-template h1{font-size:20pt;margin:0 0 8mm;color:#2f5f2f}.agreement-template h2{font-size:13pt;margin:7mm 0 3mm;color:#2f5f2f}.agreement-template h3{font-size:11.5pt;margin:5mm 0 2mm;color:#333}.agreement-template p{margin:0 0 3mm}.agreement-meta{padding:4mm;background:#f3f7ef;border-left:1.5mm solid #8cc31b}.considerations{margin:0 0 4mm 6mm;padding:0}.considerations li{margin-bottom:2.5mm}.land-unit-table table{width:100%;border-collapse:collapse;margin:3mm 0 5mm}.land-unit-table th,.land-unit-table td{border:0.2mm solid #bbb;padding:2mm;text-align:left}.signature-grid{display:table;width:100%;margin-top:12mm;page-break-inside:avoid}.signature-grid>div{display:table-cell;width:50%;padding-right:8mm;vertical-align:top}.agreement-template .signature-placeholder{width:58mm;height:16mm;margin:5mm 0 0;padding-top:4mm;background:#d7d7d7;border:0.5mm dashed #b7b7b7;border-radius:2mm;color:#7d7d7d;font-size:9px;line-height:1.3;font-weight:bold;text-align:center;text-transform:uppercase;box-sizing:border-box;overflow:hidden}.agreement-template .signature-placeholder--spacer{visibility:hidden}.agreement-template .signature-placeholder.has-image{padding:0;background:transparent;border:0;line-height:0;font-size:0}.agreement-template .signature-placeholder.has-image img{display:block;width:auto;height:auto;max-width:58mm;max-height:16mm;margin:0;border:0}.signature-line{height:18mm;border-bottom:0.3mm solid #555;margin:0 0 3mm}.agreement-template .signature-placeholder+.signature-line{height:0;margin:1mm 0 3mm}';
     }
 
     private function defaultCertificateTemplate(): array

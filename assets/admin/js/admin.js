@@ -82,9 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const previewStyle = form.querySelector('[data-oasebos-template-preview-style]');
   const previewTitle = form.querySelector('[data-oasebos-template-preview-title]');
   const status = form.querySelector('[data-oasebos-template-preview-status]');
+  const name = field('name');
+  const resetAgreementTemplate = form.querySelector('[data-oasebos-reset-agreement-template]');
   const resetCertificateTemplate = form.querySelector('[data-oasebos-reset-certificate-template]');
   let timer = null;
   let controller = null;
+  let lastType = type ? type.value : '';
+  let templateTouched = Boolean(content && content.value.trim());
 
   const setStatus = (message, isError = false) => {
     if (!status) return;
@@ -134,6 +138,36 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const escapeAttribute = (value) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const dispatchTemplateInputs = () => {
+    [type, content, css].forEach((input) => {
+      if (input) input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  };
+
+  const applyStandardTemplate = (templateType, force = false) => {
+    if (!type || !content || !css) return;
+    if (!force && templateTouched) return;
+
+    templateTouched = false;
+
+    if ('agreement' === templateType) {
+      type.value = 'agreement';
+      content.value = form.getAttribute('data-oasebos-default-agreement-content') || '';
+      css.value = form.getAttribute('data-oasebos-default-agreement-css') || '';
+      if (name && (!name.value.trim() || 'Standaard certificaat' === name.value.trim())) name.value = 'Standaard participatieovereenkomst';
+    } else if ('certificate' === templateType) {
+      type.value = 'certificate';
+      content.value = form.getAttribute('data-oasebos-default-certificate-content') || '';
+      css.value = form.getAttribute('data-oasebos-default-certificate-css') || '';
+      if (name && (!name.value.trim() || 'Standaard participatieovereenkomst' === name.value.trim())) name.value = 'Standaard certificaat';
+    } else {
+      return;
+    }
+
+    lastType = templateType;
+    dispatchTemplateInputs();
+  };
 
   const imageTargets = {
     signature: {
@@ -189,15 +223,33 @@ document.addEventListener('DOMContentLoaded', () => {
     content.dispatchEvent(new Event('input', { bubbles: true }));
   };
 
+  if (content) {
+    content.addEventListener('input', () => {
+      templateTouched = true;
+    });
+  }
+
+  if (type) {
+    type.addEventListener('change', () => {
+      const nextType = type.value || '';
+      if (nextType !== lastType && ('agreement' === nextType || 'certificate' === nextType)) {
+        applyStandardTemplate(nextType, true);
+      }
+      lastType = nextType;
+    });
+  }
+
+  if (resetAgreementTemplate) {
+    resetAgreementTemplate.addEventListener('click', () => {
+      if (!window.confirm('Weet je zeker dat je de inhoud en CSS wilt resetten naar het basis overeenkomsttemplate?')) return;
+      applyStandardTemplate('agreement', true);
+    });
+  }
+
   if (resetCertificateTemplate) {
     resetCertificateTemplate.addEventListener('click', () => {
       if (!window.confirm('Weet je zeker dat je de inhoud en CSS wilt resetten naar het basis certificaattemplate?')) return;
-      if (type) type.value = 'certificate';
-      if (content) content.value = form.getAttribute('data-oasebos-default-certificate-content') || '';
-      if (css) css.value = form.getAttribute('data-oasebos-default-certificate-css') || '';
-      [type, content, css].forEach((input) => {
-        if (input) input.dispatchEvent(new Event('input', { bubbles: true }));
-      });
+      applyStandardTemplate('certificate', true);
     });
   }
 

@@ -197,7 +197,84 @@ final class ParticipationService
 
     private function defaultAgreementTemplate(): array
     {
-        return ['id' => 0, 'template' => ['content' => '<h1>Participatieovereenkomst</h1><p>[participant_full_name] - [participation_number]</p>', 'css' => '']];
+        return ['id' => 0, 'template' => ['content' => $this->defaultAgreementContent(), 'css' => $this->defaultAgreementCss()]];
+    }
+
+    private function defaultAgreementContent(): string
+    {
+        return '<div class="agreement-template">
+    <h1>Participatieovereenkomst</h1>
+    <p class="agreement-meta"><strong>Participatienummer:</strong> [participation_number]<br><strong>Datum overeenkomst:</strong> [agreement_date]</p>
+
+    <h2>De ondergetekenden</h2>
+    <p>De stichting, <strong>[organization_name]</strong>, gevestigd te <strong>[organization_address]</strong>, ten deze rechtsgeldig vertegenwoordigd door de heer P.C.J. Mols (voorzitter), hierna te noemen: <strong>“[organization_name]”</strong>;</p>
+    <p>en</p>
+    <p><strong>[participant_full_name]</strong>, wonende/gevestigd aan <strong>[participant_address]</strong>, <strong>[participant_postcode] [participant_city]</strong>, <strong>[participant_country]</strong>, hierna te noemen: <strong>“Participant”</strong>.</p>
+
+    <h2>In aanmerking nemende</h2>
+    <ol class="considerations">
+        <li>dat [organization_name] onder meer ten doel heeft de bescherming van natuur in Latijns Amerika, in het bijzonder door aankoop van gronden in Latijns Amerika om deze te behouden en te beheren als permanente natuurreservaten. [organization_name] zal de bij haar in bezit zijnde gronden niet uit eigen beweging verkopen en zet zich in om natuurbeschermingsplannen te steunen en te (gaan) ontwikkelen;</li>
+        <li>dat [organization_name] de aankoop van de gebieden mede financiert door het uitgeven van participaties aan zowel bedrijven als particulieren;</li>
+        <li>dat Participant heeft aangegeven te willen participeren en partijen hun afspraken terzake middels deze overeenkomst vast willen leggen.</li>
+    </ol>
+
+    <h2>Zijn het volgende overeengekomen</h2>
+
+    <h3>1. Uitgifte participatie</h3>
+    <p>1.1 Binnen 2 weken na ontvangst van de betaling ontvangt Participant van [organization_name] een certificaat op naam ter bevestiging van de participatie.</p>
+
+    <h3>2. Aangewezen gebied</h3>
+    <p>2.1 Met de bijdrage van de Participant financiert en beschermt [organization_name] het aangewezen gebied waarvoor de participatie wordt uitgegeven. Iedere hectare van de gebieden in eigendom van [organization_name] wordt slechts eenmaal uitgegeven.</p>
+    <p>2.2 Terzake de bijdrage van Participant is <strong>[total_hectares] hectare</strong> van het gebied <strong>[project_name]</strong> in de regio <strong>[project_location]</strong> aangewezen. Dit gebied is aangewezen aan Participant en gekoppeld aan het nummer van de onderhavige participatieovereenkomst: <strong>[participation_number]</strong>.</p>
+    <p>2.3 De participatie bestaat uit <strong>[units]</strong> eenheid/eenheden van <strong>[unit_size] hectare</strong> per eenheid. De aan deze participatie gekoppelde landnummers zijn: <strong>[land_unit_numbers]</strong>.</p>
+    <div class="land-unit-table">[land_unit_table]</div>
+
+    <h3>3. Overdracht participatie</h3>
+    <p>3.1 Participant kan zijn participatie beëindigen door middel van overdracht van de participatie aan een derde.</p>
+    <p>3.2 Indien Participant zijn participatie wenst over te dragen, dient Participant de participatie ter overdracht aan Stichting Oasebos aan te bieden. Het is Participant niet toegestaan de participatie zonder tussenkomst van Stichting Oasebos aan een derde over te dragen.</p>
+    <p>3.3 Wanneer Participant de participatie ter overdracht aanbiedt aan Stichting Oasebos zal Stichting Oasebos zich inspannen voor zo spoedig mogelijke overdracht van de participatie aan een andere/nieuwe Participant. De door Participant aangeboden participatie wordt daarbij met voorrang behandeld boven de niet vergeven participaties van Stichting Oasebos. Participant kan ook de participatie om niet overdragen aan Stichting Oasebos; in dat geval vervallen artikelen 3.4, 3.5 en 3.6.</p>
+    <p>3.4 Voor de bemiddeling van de overdracht van de participatie brengt Stichting Oasebos een bedrag van 8% van de bijdrage van Participant in rekening.</p>
+    <p>3.5 Wanneer Stichting Oasebos een andere/nieuwe Participant heeft gevonden, of de voordracht van de nieuwe Participant van de bestaande participatiehouders heeft geaccepteerd waardoor de participatie kan worden overgenomen, wordt de participatie aan deze nieuwe Participant overgedragen.</p>
+    <p>3.6 Stichting Oasebos betaalt aan Participant binnen 4 weken nadat de participatieovereenkomst met de nieuwe Participant is getekend en de betaling van de nieuwe Participant is ontvangen, het ontvangen bedrag minus de 8% administratiekosten.</p>
+
+    <h3>4. Toegang tot de gebieden van [organization_name]</h3>
+    <p>4.1 De gebieden in eigendom van [organization_name] zijn slechts zeer beperkt toegankelijk.</p>
+    <p>4.2 Participant heeft uit hoofde van de participatie het exclusieve recht om, onder begeleiding van een boswachter/beheerder, alle gebieden die in eigendom zijn van [organization_name] te bezoeken en betreden.</p>
+
+    <h3>5. Informatie over de activiteiten van [organization_name]</h3>
+    <p>5.1 Participant zal door [organization_name] op de hoogte worden gehouden van de activiteiten van [organization_name] en recente ontwikkelingen door middel van een digitale nieuwsbrief die in principe tweemaal per jaar gratis wordt verstuurd.</p>
+    <p>5.2 Participant kan zich op ieder moment uitschrijven voor de digitale nieuwsbrief door middel van een e-mail aan het secretariaat van [organization_name] onder vermelding van “afmelding nieuwsbrief”.</p>
+
+    <h3>6. Inspraak over de activiteiten van [organization_name]</h3>
+    <p>6.1 Participant kan opmerkingen ten aanzien van het beleid van [organization_name] en de uitvoering van activiteiten door [organization_name], schriftelijk, per e-mail of per post, indienen bij het secretariaat van [organization_name].</p>
+    <p>6.2 [organization_name] streeft ernaar een schriftelijke reactie te geven op binnengekomen opmerkingen van Participant.</p>
+    <p>6.3 Indien mogelijk en wenselijk zal [organization_name] wijzigingen doorvoeren in haar beleid en/of de uitvoering van activiteiten naar aanleiding van opmerkingen van Participant. Zulks volledig ter beoordeling van [organization_name].</p>
+
+    <h3>7. Beheerkosten</h3>
+    <p>7.1 De beheerkosten voor de gebieden in eigendom van [organization_name] worden door [organization_name] gefinancierd.</p>
+
+    <h3>8. Overige bepalingen</h3>
+    <p>8.1 Op deze overeenkomst is Nederlands recht van toepassing.</p>
+    <p>8.2 Alle geschillen, die mochten ontstaan naar aanleiding van onderhavige overeenkomst, dan wel nadere overeenkomsten die daarvan het gevolg mochten zijn, zullen worden voorgelegd aan de rechtbank te Rotterdam.</p>
+
+    <div class="signature-grid">
+        <div>
+            <p>Aldus overeengekomen namens [organization_name],</p>
+            <p class="signature-line"></p>
+            <p>P.C.J. Mols<br>Voorzitter [organization_name]</p>
+        </div>
+        <div>
+            <p>Aldus overeengekomen door Participant,</p>
+            <p class="signature-line"></p>
+            <p>[participant_full_name]</p>
+        </div>
+    </div>
+</div>';
+    }
+
+    private function defaultAgreementCss(): string
+    {
+        return '.agreement-template{font-family:DejaVu Sans,Arial,sans-serif;font-size:10.5pt;line-height:1.45;color:#222}.agreement-template h1{font-size:20pt;margin:0 0 8mm;color:#2f5f2f}.agreement-template h2{font-size:13pt;margin:7mm 0 3mm;color:#2f5f2f}.agreement-template h3{font-size:11.5pt;margin:5mm 0 2mm;color:#333}.agreement-template p{margin:0 0 3mm}.agreement-meta{padding:4mm;background:#f3f7ef;border-left:1.5mm solid #8cc31b}.considerations{margin:0 0 4mm 6mm;padding:0}.considerations li{margin-bottom:2.5mm}.land-unit-table table{width:100%;border-collapse:collapse;margin:3mm 0 5mm}.land-unit-table th,.land-unit-table td{border:0.2mm solid #bbb;padding:2mm;text-align:left}.signature-grid{display:table;width:100%;margin-top:12mm;page-break-inside:avoid}.signature-grid>div{display:table-cell;width:50%;padding-right:8mm;vertical-align:top}.signature-line{height:18mm;border-bottom:0.3mm solid #555;margin:8mm 0 3mm}';
     }
 
     private function defaultCertificateTemplate(): array

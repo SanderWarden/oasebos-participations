@@ -42,13 +42,19 @@ final class ParticipationsPage extends BasePage
 
     private function renderStats(array $participations): void
     {
-        $total = count($participations);
+        $total = 0;
+        $test = 0;
         $paid = 0;
         $pending = 0;
         $hectares = 0.0;
         $amount = 0.0;
 
         foreach ($participations as $participation) {
+            if ($this->isTestParticipation($participation)) {
+                $test++;
+                continue;
+            }
+            $total++;
             if (($participation['status'] ?? '') === 'paid') {
                 $paid++;
                 $hectares += (float) $participation['total_hectares'];
@@ -59,11 +65,12 @@ final class ParticipationsPage extends BasePage
         }
 
         echo '<div class="oasebos-stat-grid">';
-        $this->statCard('Totaal participaties', (string) $total, 'Alle geregistreerde participatieaanvragen.');
+        $this->statCard('Totaal participaties', (string) $total, 'Alle echte participatieaanvragen. Testen zijn uitgesloten.');
         $this->statCard('Betaald', (string) $paid, 'Bevestigde en verwerkte participaties.');
         $this->statCard('In afwachting', (string) $pending, 'Wacht op betalingsbevestiging.');
         $this->statCard('Betaald hectares', number_format_i18n($hectares, 2), 'Totaal beschermde hectares uit betaalde participaties.');
         $this->statCard('Betaald revenue', '€ ' . number_format_i18n($amount, 2), 'Brutobedrag uit betaalde participaties.');
+        $this->statCard('Testen', (string) $test, 'Testparticipaties zichtbaar in de lijst, maar uitgesloten van registry en totals.');
         echo '</div>';
     }
 
@@ -110,7 +117,10 @@ final class ParticipationsPage extends BasePage
         $pdf = (string) ($participation['pdf_path'] ?? '');
         $landUnits = $this->repo->landUnitsForParticipation((int) $participation['id']);
         echo '<section class="oasebos-card oasebos-participation-detail"><h2>Participatiegegevens</h2><div class="oasebos-card__body">';
-        echo '<div class="oasebos-detail-header"><div><strong>' . esc_html($participation['participation_number']) . '</strong><span>' . esc_html($this->participantName($participation)) . '</span></div>' . $this->statusBadge((string) $participation['status']) . '</div>';
+        echo '<div class="oasebos-detail-header"><div><strong>' . esc_html($participation['participation_number']) . '</strong><span>' . esc_html($this->participantName($participation)) . '</span></div><div class="oasebos-badge-row">' . ($this->isTestParticipation($participation) ? $this->testBadge() : '') . $this->statusBadge((string) $participation['status']) . '</div></div>';
+        if ($this->isTestParticipation($participation)) {
+            echo '<p class="oasebos-test-notice">Testparticipatie: deze betaling is zichtbaar voor controle, maar telt niet mee voor registry, landnummers, projectbeschikbaarheid of totals.</p>';
+        }
         echo '<div class="oasebos-detail-grid">';
         $this->detailItem('Project', (string) ($project['name'] ?? 'Onbekend project'));
         $this->detailItem('Email', (string) $participation['participant_email']);
@@ -129,7 +139,7 @@ final class ParticipationsPage extends BasePage
         $this->detailItem('Aangemaakt', (string) $participation['created_at']);
         echo '</div>';
         $this->renderTemplateSelectors($participation, $templates);
-        $this->renderLandUnits($landUnits);
+        $this->renderLandUnits($landUnits, $this->isTestParticipation($participation));
         echo '<div class="oasebos-detail-actions"><a class="button" href="' . esc_url(admin_url('admin.php?page=oasebos-participations-list')) . '">Details sluiten</a>';
         if ($pdf !== '') {
             $downloadUrl = wp_nonce_url(admin_url('admin-post.php?action=oasebos_download_pdf&id=' . absint($participation['id'])), 'oasebos_download_pdf_' . absint($participation['id']));
@@ -171,11 +181,11 @@ final class ParticipationsPage extends BasePage
         echo '<div class="oasebos-detail-item"><span>' . esc_html($label) . '</span><strong>' . esc_html($value !== '' ? $value : '—') . '</strong></div>';
     }
 
-    private function renderLandUnits(array $landUnits): void
+    private function renderLandUnits(array $landUnits, bool $isTest = false): void
     {
         echo '<div class="oasebos-land-units"><h3>Gekoppelde landnummers</h3>';
         if (! $landUnits) {
-            echo '<p class="oasebos-muted">Nog geen landnummers toegewezen. Deze worden aangemaakt zodra de participatie betaald is.</p></div>';
+            echo '<p class="oasebos-muted">' . esc_html($isTest ? 'Geen landnummers toegewezen: testparticipaties worden niet in de registry opgenomen.' : 'Nog geen landnummers toegewezen. Deze worden aangemaakt zodra de participatie betaald is.') . '</p></div>';
             return;
         }
 
@@ -198,7 +208,8 @@ final class ParticipationsPage extends BasePage
         foreach ($participations as $participation) {
             $project = $projects[(int) $participation['project_id']] ?? [];
             $viewUrl = admin_url('admin.php?page=oasebos-participations-list&view=' . absint($participation['id']));
-            echo '<tr><td><strong>' . esc_html($participation['participation_number']) . '</strong><br><code>#' . esc_html((string) $participation['id']) . '</code></td>';
+            $isTest = $this->isTestParticipation($participation);
+            echo '<tr class="' . esc_attr($isTest ? 'is-test-participation' : '') . '"><td><strong>' . esc_html($participation['participation_number']) . '</strong>' . ($isTest ? '<br>' . $this->testBadge() : '') . '<br><code>#' . esc_html((string) $participation['id']) . '</code></td>';
             echo '<td><strong>' . esc_html($this->participantName($participation)) . '</strong><br><a href="mailto:' . esc_attr($participation['participant_email']) . '">' . esc_html($participation['participant_email']) . '</a></td>';
             echo '<td>' . esc_html((string) ($project['name'] ?? 'Onbekend project')) . '</td>';
             echo '<td>' . $this->statusBadge((string) $participation['status']) . '</td>';
@@ -225,5 +236,20 @@ final class ParticipationsPage extends BasePage
     private function statusBadge(string $status): string
     {
         return '<span class="oasebos-status oasebos-status--' . esc_attr($status) . '">' . esc_html(ucfirst(str_replace('_', ' ', $status))) . '</span>';
+    }
+
+    private function testBadge(): string
+    {
+        return '<span class="oasebos-status oasebos-status--test">Test</span>';
+    }
+
+    private function isTestParticipation(array $participation): bool
+    {
+        if (array_key_exists('is_test', $participation)) {
+            return (int) $participation['is_test'] === 1;
+        }
+
+        $snapshot = json_decode((string) ($participation['project_snapshot'] ?? ''), true) ?: [];
+        return ! empty($snapshot['_is_test']);
     }
 }

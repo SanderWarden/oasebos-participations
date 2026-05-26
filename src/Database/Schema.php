@@ -62,6 +62,7 @@ final class Schema
             price_per_unit DECIMAL(12,2) NOT NULL,
             total_amount DECIMAL(12,2) NOT NULL,
             currency CHAR(3) NOT NULL DEFAULT 'EUR',
+            is_test TINYINT(1) NOT NULL DEFAULT 0,
             status VARCHAR(30) NOT NULL DEFAULT 'pending',
             mollie_payment_id VARCHAR(80) NULL,
             agreement_template_id BIGINT UNSIGNED NULL,
@@ -72,7 +73,7 @@ final class Schema
             paid_at DATETIME NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
-            PRIMARY KEY (id), UNIQUE KEY participation_number (participation_number), UNIQUE KEY mollie_payment_id (mollie_payment_id), KEY project_id (project_id), KEY status (status), KEY participant_email (participant_email), KEY created_at (created_at)
+            PRIMARY KEY (id), UNIQUE KEY participation_number (participation_number), UNIQUE KEY mollie_payment_id (mollie_payment_id), KEY project_id (project_id), KEY status (status), KEY is_test (is_test), KEY participant_email (participant_email), KEY created_at (created_at)
         ) $charset";
         $sql[] = "CREATE TABLE {$p}oasebos_participation_land_units (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

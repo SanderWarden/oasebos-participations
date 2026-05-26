@@ -31,10 +31,10 @@ final class MollieService
         return $client;
     }
 
-    public function createPayment(string $entityType, int $entityId, string $amount, string $currency, string $description, array $metadata): array
+    public function createPayment(string $entityType, int $entityId, string $amount, string $currency, string $description, array $metadata, string $returnUrl = ''): array
     {
         $webhook = rest_url('oasebos/v1/mollie-webhook');
-        $return = add_query_arg(['oasebos_payment_return' => 1], home_url('/'));
+        $return = $returnUrl ?: add_query_arg(['oasebos_payment_return' => 1], home_url('/'));
         $client = $this->client();
         if (! $client) {
             $paymentId = 'stub_' . wp_generate_uuid4();
@@ -61,11 +61,11 @@ final class MollieService
         return $client->payments->get($paymentId);
     }
 
-    public function createCustomerAndFirstPayment(int $entityId, string $email, string $name, string $amount, string $currency, string $interval): array
+    public function createCustomerAndFirstPayment(int $entityId, string $email, string $name, string $amount, string $currency, string $interval, string $returnUrl = ''): array
     {
         $client = $this->client();
         if (! $client) {
-            return $this->createPayment('recurring_donation', $entityId, $amount, $currency, sprintf(__('Machtiging periodieke donatie %s', 'oasebos-participations'), $interval), ['plugin_entity_type' => 'recurring_donation_initial', 'plugin_entity_id' => $entityId, 'interval' => $interval]);
+            return $this->createPayment('recurring_donation', $entityId, $amount, $currency, sprintf(__('Machtiging periodieke donatie %s', 'oasebos-participations'), $interval), ['plugin_entity_type' => 'recurring_donation_initial', 'plugin_entity_id' => $entityId, 'interval' => $interval], $returnUrl);
         }
 
         $customer = $client->customers->create(['name' => $name ?: $email, 'email' => $email, 'metadata' => ['plugin_entity_type' => 'recurring_donation', 'plugin_entity_id' => $entityId]]);
@@ -74,7 +74,7 @@ final class MollieService
             'amount' => ['currency' => $currency, 'value' => number_format((float) $amount, 2, '.', '')],
             'description' => sprintf(__('Oasebos machtiging periodieke donatie %s', 'oasebos-participations'), $interval),
             'sequenceType' => 'first',
-            'redirectUrl' => add_query_arg(['oasebos_payment_return' => 1], home_url('/')),
+            'redirectUrl' => $returnUrl ?: add_query_arg(['oasebos_payment_return' => 1], home_url('/')),
             'webhookUrl' => rest_url('oasebos/v1/mollie-webhook'),
             'metadata' => ['plugin_entity_type' => 'recurring_donation_initial', 'plugin_entity_id' => $entityId, 'interval' => $interval, 'customer_id' => $customer->id],
         ]);

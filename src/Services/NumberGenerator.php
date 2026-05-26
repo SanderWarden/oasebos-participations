@@ -11,6 +11,10 @@ final class NumberGenerator
 
     public function generate(string $type): string
     {
+        if ($type === 'participation') {
+            return $this->generateParticipation();
+        }
+
         $map = ['participation' => ['P','participations','participation_number'], 'donation' => ['D','donations','donation_number'], 'recurring' => ['R','recurring_donations','subscription_number'], 'land_unit' => ['L','participation_land_units','land_unit_number']];
         [$prefix, $table, $column] = $map[$type] ?? $map['participation'];
         $year = gmdate('Y');
@@ -19,6 +23,19 @@ final class NumberGenerator
             if (! $this->repo->findBy($table, $column, $number)) { return $number; }
         }
         return sprintf('OASEBOS-%s-%s-%s', $prefix, $year, wp_generate_password(8, false, false));
+    }
+
+    private function generateParticipation(): string
+    {
+        $start = max(1, absint(get_option('oasebos_participation_start_number', '1')));
+        $next = max($start, $this->repo->maxNumericSuffix('participations', 'participation_number') + 1);
+
+        for ($i = 0; $i < 100; $i++) {
+            $number = sprintf('%05d', $next + $i);
+            if (! $this->repo->findBy('participations', 'participation_number', $number)) { return $number; }
+        }
+
+        return (string) ($next + 100);
     }
 
     public function generateLandUnit(array $project, int $sequence): string

@@ -23,7 +23,8 @@ final class DashboardPage extends BasePage
         $this->header('Oasebos dashboard', 'Beheer projecten, participaties, donaties, periodieke steun en operationele controle vanuit één overzicht.');
         echo '<div class="oasebos-dashboard-grid">';
         foreach ($counts as $label => [$table, $icon, $url]) {
-            echo '<a class="oasebos-dashboard-card" href="' . esc_url($url) . '"><span class="dashicons ' . esc_attr($icon) . '"></span><strong>' . esc_html((string) $this->repo->count($table)) . '</strong><em>' . esc_html($label) . '</em></a>';
+            $count = $table === 'participations' ? $this->repo->count($table, 'is_test = 0') : $this->repo->count($table);
+            echo '<a class="oasebos-dashboard-card" href="' . esc_url($url) . '"><span class="dashicons ' . esc_attr($icon) . '"></span><strong>' . esc_html((string) $count) . '</strong><em>' . esc_html($label) . '</em></a>';
         }
         echo '</div>';
 

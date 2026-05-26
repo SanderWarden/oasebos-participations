@@ -12,6 +12,9 @@
     <p><label><?php esc_html_e('E-mail', 'oasebos-participations'); ?><input type="email" name="email" required></label></p><p><label><?php esc_html_e('Telefoon', 'oasebos-participations'); ?><input name="phone"></label></p>
     <p><label><?php esc_html_e('Adres', 'oasebos-participations'); ?><input name="address"></label></p><p><label><?php esc_html_e('Postcode', 'oasebos-participations'); ?><input name="postcode"></label></p>
     <p><label><?php esc_html_e('Plaats', 'oasebos-participations'); ?><input name="city"></label></p><p><label><?php esc_html_e('Landcode', 'oasebos-participations'); ?><input name="country" value="NL" maxlength="2"></label></p>
+    <?php if (current_user_can('manage_oasebos') || current_user_can('manage_options')): ?>
+        <p><label class="oasebos-checkbox-label"><input type="checkbox" name="is_test" value="1"> <?php esc_html_e('Testparticipatie — niet meetellen voor registry of beschikbaarheid', 'oasebos-participations'); ?></label></p>
+    <?php endif; ?>
     <p><label class="oasebos-checkbox-label"><input type="checkbox" name="is_gift" value="1" data-oasebos-gift-toggle> <?php esc_html_e('Ik geef deze participatie als cadeau', 'oasebos-participations'); ?></label></p>
     <fieldset class="oasebos-gift-fields" data-oasebos-gift-fields hidden>
         <legend><?php esc_html_e('Gegevens ontvanger cadeau', 'oasebos-participations'); ?></legend>

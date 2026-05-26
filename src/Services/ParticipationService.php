@@ -21,6 +21,10 @@ final class ParticipationService
         }
         $templates = $this->snapshots($project);
         $projectSnapshot = $project;
+        $isTest = ! empty($data['is_test']);
+        if ($isTest) {
+            $projectSnapshot['_is_test'] = true;
+        }
         if (! empty($data['is_gift'])) {
             $projectSnapshot['_gift'] = [
                 'is_gift' => true,
@@ -35,7 +39,7 @@ final class ParticipationService
             'participant_first_name' => $data['first_name'], 'participant_last_name' => $data['last_name'], 'participant_email' => $data['email'], 'participant_phone' => $data['phone'] ?? '',
             'participant_address' => $data['address'] ?? '', 'participant_postcode' => $data['postcode'] ?? '', 'participant_city' => $data['city'] ?? '', 'participant_country' => $data['country'] ?? '',
             'units' => $units, 'unit_size' => $project['unit_size'], 'total_hectares' => $hectares, 'price_per_unit' => $project['price_per_unit'], 'total_amount' => $units * (float) $project['price_per_unit'], 'currency' => $project['currency'],
-            'status' => 'pending', 'agreement_template_id' => $templates['agreement_id'], 'certificate_template_id' => $templates['certificate_id'], 'agreement_template_snapshot' => $templates['agreement'], 'certificate_template_snapshot' => $templates['certificate'],
+            'is_test' => $isTest ? 1 : 0, 'status' => 'pending', 'agreement_template_id' => $templates['agreement_id'], 'certificate_template_id' => $templates['certificate_id'], 'agreement_template_snapshot' => $templates['agreement'], 'certificate_template_snapshot' => $templates['certificate'],
         ]);
     }
 
@@ -43,14 +47,15 @@ final class ParticipationService
     {
         $p = $this->repo->get('participations', $id);
         if (! $p || $p['status'] === 'paid') { return; }
+        $isTest = $this->isTestParticipation($p);
         $project = $this->repo->get('projects', (int) $p['project_id']);
         $landUnits = $project ? $this->repo->landUnitsForParticipation((int) $p['id']) : [];
         $this->repo->beginTransaction();
         try {
-            if ($project && ! $landUnits && ! $this->repo->decrementProjectAvailability((int) $project['id'], (float) $p['total_hectares'])) {
+            if (! $isTest && $project && ! $landUnits && ! $this->repo->decrementProjectAvailability((int) $project['id'], (float) $p['total_hectares'])) {
                 throw new \RuntimeException(__('Dit project heeft niet meer genoeg hectares beschikbaar.', 'oasebos-participations'));
             }
-            if ($project) { $landUnits = $this->allocateLandUnits($p, $project); }
+            if (! $isTest && $project) { $landUnits = $this->allocateLandUnits($p, $project); }
             $this->repo->commit();
         } catch (\Throwable $e) {
             $this->repo->rollBack();
@@ -111,7 +116,17 @@ final class ParticipationService
         $snapshot = json_decode((string) ($p['project_snapshot'] ?? ''), true) ?: [];
         $gift = is_array($snapshot['_gift'] ?? null) ? $snapshot['_gift'] : [];
         $giftName = trim((string) ($gift['first_name'] ?? '') . ' ' . (string) ($gift['last_name'] ?? ''));
-        return ['participant_first_name'=>$p['participant_first_name'],'participant_last_name'=>$p['participant_last_name'],'participant_email'=>$p['participant_email'],'participant_address'=>$p['participant_address'],'participant_postcode'=>$p['participant_postcode'],'participant_city'=>$p['participant_city'],'participant_country'=>$p['participant_country'],'is_gift'=>!empty($gift['is_gift'])?'yes':'no','gift_first_name'=>$gift['first_name']??'','gift_last_name'=>$gift['last_name']??'','gift_full_name'=>$giftName,'gift_email'=>$gift['email']??'','gift_message'=>$gift['message']??'','project_name'=>$project['name'] ?? '', 'project_location'=>$project['location'] ?? '', 'units'=>$p['units'],'forest_piece_label'=>$forestPieceLabel,'unit_size'=>$p['unit_size'],'total_hectares'=>$p['total_hectares'],'price_per_unit'=>$p['price_per_unit'],'total_amount'=>$p['total_amount'],'currency'=>$p['currency'],'participation_number'=>$p['participation_number'],'land_unit_numbers'=>implode(', ', $numbers),'land_unit_count'=>(string) count($numbers),'land_unit_table'=>$this->landUnitTable($landUnits),'agreement_date'=>date_i18n(get_option('date_format')),'payment_date'=>date_i18n(get_option('date_format')),'organization_name'=>get_option('oasebos_organization_name','Stichting Oasebos'),'organization_address'=>get_option('oasebos_organization_address','')];
+        return ['participant_first_name'=>$p['participant_first_name'],'participant_last_name'=>$p['participant_last_name'],'participant_email'=>$p['participant_email'],'participant_address'=>$p['participant_address'],'participant_postcode'=>$p['participant_postcode'],'participant_city'=>$p['participant_city'],'participant_country'=>$p['participant_country'],'is_test'=>$this->isTestParticipation($p)?'yes':'no','is_gift'=>!empty($gift['is_gift'])?'yes':'no','gift_first_name'=>$gift['first_name']??'','gift_last_name'=>$gift['last_name']??'','gift_full_name'=>$giftName,'gift_email'=>$gift['email']??'','gift_message'=>$gift['message']??'','project_name'=>$project['name'] ?? '', 'project_location'=>$project['location'] ?? '', 'units'=>$p['units'],'forest_piece_label'=>$forestPieceLabel,'unit_size'=>$p['unit_size'],'total_hectares'=>$p['total_hectares'],'price_per_unit'=>$p['price_per_unit'],'total_amount'=>$p['total_amount'],'currency'=>$p['currency'],'participation_number'=>$p['participation_number'],'land_unit_numbers'=>implode(', ', $numbers),'land_unit_count'=>(string) count($numbers),'land_unit_table'=>$this->landUnitTable($landUnits),'agreement_date'=>date_i18n(get_option('date_format')),'payment_date'=>date_i18n(get_option('date_format')),'organization_name'=>get_option('oasebos_organization_name','Stichting Oasebos'),'organization_address'=>get_option('oasebos_organization_address','')];
+    }
+
+    private function isTestParticipation(array $participation): bool
+    {
+        if (array_key_exists('is_test', $participation)) {
+            return (int) $participation['is_test'] === 1;
+        }
+
+        $snapshot = json_decode((string) ($participation['project_snapshot'] ?? ''), true) ?: [];
+        return ! empty($snapshot['_is_test']);
     }
 
     private function allocateLandUnits(array $participation, array $project): array
@@ -160,7 +175,8 @@ final class ParticipationService
 
     private function adminParticipationEmail(array $c, array $p): string
     {
-        return '<p>Er is een nieuwe betaalde participatie ontvangen.</p><p><strong>Participatienummer:</strong> ' . esc_html((string) $c['participation_number']) . '<br><strong>Naam:</strong> ' . esc_html(trim((string) $c['participant_first_name'] . ' ' . (string) $c['participant_last_name'])) . '<br><strong>E-mail:</strong> ' . esc_html((string) $c['participant_email']) . '<br><strong>Project:</strong> ' . esc_html((string) $c['project_name']) . '<br><strong>Hectares:</strong> ' . esc_html((string) $c['total_hectares']) . ' ha<br><strong>Bedrag:</strong> ' . esc_html((string) $c['currency']) . ' ' . esc_html(number_format_i18n((float) $c['total_amount'], 2)) . '</p><p><a href="' . esc_url(admin_url('admin.php?page=oasebos-participations-list&view=' . absint((int) $p['id']))) . '">Bekijk participatie</a></p>';
+        $testNotice = ($c['is_test'] ?? '') === 'yes' ? '<p><strong>Let op:</strong> dit is een testparticipatie en telt niet mee voor de registry of projectbeschikbaarheid.</p>' : '';
+        return $testNotice . '<p>Er is een nieuwe betaalde participatie ontvangen.</p><p><strong>Participatienummer:</strong> ' . esc_html((string) $c['participation_number']) . '<br><strong>Naam:</strong> ' . esc_html(trim((string) $c['participant_first_name'] . ' ' . (string) $c['participant_last_name'])) . '<br><strong>E-mail:</strong> ' . esc_html((string) $c['participant_email']) . '<br><strong>Project:</strong> ' . esc_html((string) $c['project_name']) . '<br><strong>Hectares:</strong> ' . esc_html((string) $c['total_hectares']) . ' ha<br><strong>Bedrag:</strong> ' . esc_html((string) $c['currency']) . ' ' . esc_html(number_format_i18n((float) $c['total_amount'], 2)) . '</p><p><a href="' . esc_url(admin_url('admin.php?page=oasebos-participations-list&view=' . absint((int) $p['id']))) . '">Bekijk participatie</a></p>';
     }
 
     private function landUnitTable(array $landUnits): string

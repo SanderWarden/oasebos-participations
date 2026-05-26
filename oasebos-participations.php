@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Oasebos Participations
  * Description: Project-based participations, donations, recurring donations, Mollie payments, templates and PDF generation for Stichting Oasebos.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Requires at least: 6.4
  * Requires PHP: 8.1
  * Author: Stichting Oasebos
@@ -15,7 +15,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('OASEBOS_PARTICIPATIONS_VERSION', '0.1.1');
+define('OASEBOS_PARTICIPATIONS_VERSION', '0.1.2');
 define('OASEBOS_PARTICIPATIONS_FILE', __FILE__);
 define('OASEBOS_PARTICIPATIONS_DIR', plugin_dir_path(__FILE__));
 define('OASEBOS_PARTICIPATIONS_URL', plugin_dir_url(__FILE__));

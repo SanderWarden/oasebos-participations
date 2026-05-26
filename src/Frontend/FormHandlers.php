@@ -43,6 +43,19 @@ final class FormHandlers
         exit;
     }
 
+    private function successReturnUrl(string $optionKey): string
+    {
+        $pageId = absint(get_option($optionKey));
+        if ($pageId > 0) {
+            $url = get_permalink($pageId);
+            if (is_string($url) && $url !== '') {
+                return $url;
+            }
+        }
+
+        return add_query_arg(['oasebos_payment_return' => 1], home_url('/'));
+    }
+
     public function participation(): void
     {
         $this->verify();
@@ -50,6 +63,7 @@ final class FormHandlers
         try {
             $repo = new Repository();
             $isGift = ! empty($_POST['is_gift']);
+            $isTest = ! empty($_POST['is_test']) && (current_user_can('manage_oasebos') || current_user_can('manage_options'));
             $giftData = $isGift ? [
                 'is_gift' => true,
                 'gift_first_name' => Sanitizer::text('gift_first_name', $_POST),
@@ -76,6 +90,7 @@ final class FormHandlers
                         'postcode' => Sanitizer::text('postcode', $_POST),
                         'city' => Sanitizer::text('city', $_POST),
                         'country' => Sanitizer::text('country', $_POST, 'NL'),
+                        'is_test' => $isTest,
                     ], $giftData));
                 }
                 if (! $participationIds) { throw new \RuntimeException(__('Je mandje is leeg.', 'oasebos-participations')); }
@@ -91,6 +106,7 @@ final class FormHandlers
                 'postcode' => Sanitizer::text('postcode', $_POST),
                 'city' => Sanitizer::text('city', $_POST),
                 'country' => Sanitizer::text('country', $_POST, 'NL'),
+                'is_test' => $isTest,
                 ], $giftData));
             }
 
@@ -105,7 +121,8 @@ final class FormHandlers
                 'participation_ids' => $participationIds,
                 'participation_number' => $p['participation_number'],
                 'project_id' => $p['project_id'],
-            ]);
+                'is_test' => $isTest ? 'yes' : 'no',
+            ], $this->successReturnUrl('oasebos_participation_success_page_id'));
             $repo->update('participations', $id, ['mollie_payment_id' => $payment['id']]);
             $this->redirectToCheckout((string) $payment['checkout_url']);
         } catch (\Throwable $e) {
@@ -127,7 +144,7 @@ final class FormHandlers
                 'interval' => '1 month',
             ]);
             $r = $repo->get('recurring_donations', $id);
-            $payment = (new MollieService($repo))->createCustomerAndFirstPayment($id, $r['donor_email'], trim($r['donor_first_name'] . ' ' . $r['donor_last_name']), (string) $r['amount'], $r['currency'], $r['interval_value']);
+            $payment = (new MollieService($repo))->createCustomerAndFirstPayment($id, $r['donor_email'], trim($r['donor_first_name'] . ' ' . $r['donor_last_name']), (string) $r['amount'], $r['currency'], $r['interval_value'], $this->successReturnUrl('oasebos_recurring_donation_success_page_id'));
             $repo->update('recurring_donations', $id, ['initial_payment_id' => $payment['id']]);
             $this->redirectToCheckout((string) $payment['checkout_url']);
         }
@@ -142,7 +159,7 @@ final class FormHandlers
         $payment = (new MollieService($repo))->createPayment('donation', $id, (string) $d['amount'], $d['currency'], 'Oasebos donatie ' . $d['donation_number'], [
             'plugin_entity_type' => 'donation',
             'plugin_entity_id' => $id,
-        ]);
+        ], $this->successReturnUrl('oasebos_donation_success_page_id'));
         $repo->update('donations', $id, ['mollie_payment_id' => $payment['id']]);
         $this->redirectToCheckout((string) $payment['checkout_url']);
     }
@@ -159,7 +176,7 @@ final class FormHandlers
             'interval' => Sanitizer::text('interval', $_POST, '1 month'),
         ]);
         $r = $repo->get('recurring_donations', $id);
-        $payment = (new MollieService($repo))->createCustomerAndFirstPayment($id, $r['donor_email'], trim($r['donor_first_name'] . ' ' . $r['donor_last_name']), (string) $r['amount'], $r['currency'], $r['interval_value']);
+        $payment = (new MollieService($repo))->createCustomerAndFirstPayment($id, $r['donor_email'], trim($r['donor_first_name'] . ' ' . $r['donor_last_name']), (string) $r['amount'], $r['currency'], $r['interval_value'], $this->successReturnUrl('oasebos_recurring_donation_success_page_id'));
         $repo->update('recurring_donations', $id, ['initial_payment_id' => $payment['id']]);
         $this->redirectToCheckout((string) $payment['checkout_url']);
     }

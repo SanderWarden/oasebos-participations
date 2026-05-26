@@ -123,6 +123,20 @@ final class Repository
         return (int) $wpdb->get_var($wpdb->prepare("SELECT COALESCE(MAX(unit_index), 0) FROM {$table} WHERE project_id = %d FOR UPDATE", $projectId)) + 1;
     }
 
+    public function maxNumericSuffix(string $table, string $column): int
+    {
+        global $wpdb;
+        $allowed = preg_replace('/[^a-z0-9_]/', '', $column);
+        $rows = $wpdb->get_col('SELECT ' . $allowed . ' FROM ' . $this->table($table));
+        $max = 0;
+        foreach ($rows ?: [] as $value) {
+            if (preg_match('/(\d+)$/', (string) $value, $matches)) {
+                $max = max($max, (int) $matches[1]);
+            }
+        }
+        return $max;
+    }
+
     public function landUnitsForParticipation(int $participationId): array
     {
         global $wpdb;

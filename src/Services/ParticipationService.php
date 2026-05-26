@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Oasebos\Participations\Services;
 
 use Oasebos\Participations\Database\Repository;
+use Oasebos\Participations\Formatting;
 
 final class ParticipationService
 {
@@ -116,7 +117,7 @@ final class ParticipationService
         $snapshot = json_decode((string) ($p['project_snapshot'] ?? ''), true) ?: [];
         $gift = is_array($snapshot['_gift'] ?? null) ? $snapshot['_gift'] : [];
         $giftName = trim((string) ($gift['first_name'] ?? '') . ' ' . (string) ($gift['last_name'] ?? ''));
-        return ['participant_first_name'=>$p['participant_first_name'],'participant_last_name'=>$p['participant_last_name'],'participant_email'=>$p['participant_email'],'participant_address'=>$p['participant_address'],'participant_postcode'=>$p['participant_postcode'],'participant_city'=>$p['participant_city'],'participant_country'=>$p['participant_country'],'is_test'=>$this->isTestParticipation($p)?'yes':'no','is_gift'=>!empty($gift['is_gift'])?'yes':'no','gift_first_name'=>$gift['first_name']??'','gift_last_name'=>$gift['last_name']??'','gift_full_name'=>$giftName,'gift_email'=>$gift['email']??'','gift_message'=>$gift['message']??'','project_name'=>$project['name'] ?? '', 'project_location'=>$project['location'] ?? '', 'units'=>$p['units'],'forest_piece_label'=>$forestPieceLabel,'unit_size'=>$p['unit_size'],'total_hectares'=>$p['total_hectares'],'price_per_unit'=>$p['price_per_unit'],'total_amount'=>$p['total_amount'],'currency'=>$p['currency'],'participation_number'=>$p['participation_number'],'land_unit_numbers'=>implode(', ', $numbers),'land_unit_count'=>(string) count($numbers),'land_unit_table'=>$this->landUnitTable($landUnits),'agreement_date'=>date_i18n(get_option('date_format')),'payment_date'=>date_i18n(get_option('date_format')),'organization_name'=>get_option('oasebos_organization_name','Stichting Oasebos'),'organization_address'=>get_option('oasebos_organization_address','')];
+        return ['participant_first_name'=>$p['participant_first_name'],'participant_last_name'=>$p['participant_last_name'],'participant_email'=>$p['participant_email'],'participant_address'=>$p['participant_address'],'participant_postcode'=>$p['participant_postcode'],'participant_city'=>$p['participant_city'],'participant_country'=>$p['participant_country'],'is_test'=>$this->isTestParticipation($p)?'yes':'no','is_gift'=>!empty($gift['is_gift'])?'yes':'no','gift_first_name'=>$gift['first_name']??'','gift_last_name'=>$gift['last_name']??'','gift_full_name'=>$giftName,'gift_email'=>$gift['email']??'','gift_message'=>$gift['message']??'','project_name'=>$project['name'] ?? '', 'project_location'=>$project['location'] ?? '', 'units'=>$p['units'],'forest_piece_label'=>$forestPieceLabel,'unit_size'=>Formatting::hectares((float) $p['unit_size']),'total_hectares'=>Formatting::hectares((float) $p['total_hectares']),'price_per_unit'=>$p['price_per_unit'],'total_amount'=>$p['total_amount'],'currency'=>$p['currency'],'participation_number'=>$p['participation_number'],'land_unit_numbers'=>implode(', ', $numbers),'land_unit_count'=>(string) count($numbers),'land_unit_table'=>$this->landUnitTable($landUnits),'agreement_date'=>date_i18n(get_option('date_format')),'payment_date'=>date_i18n(get_option('date_format')),'organization_name'=>get_option('oasebos_organization_name','Stichting Oasebos'),'organization_address'=>get_option('oasebos_organization_address','')];
     }
 
     private function isTestParticipation(array $participation): bool
@@ -184,7 +185,7 @@ final class ParticipationService
         if (! $landUnits) { return ''; }
         $rows = '';
         foreach ($landUnits as $unit) {
-            $rows .= sprintf('<tr><td>%s</td><td>%s</td><td>%s</td></tr>', esc_html((string) $unit['unit_index']), esc_html((string) $unit['land_unit_number']), esc_html(number_format_i18n((float) $unit['hectares'], 4)));
+            $rows .= sprintf('<tr><td>%s</td><td>%s</td><td>%s</td></tr>', esc_html((string) $unit['unit_index']), esc_html((string) $unit['land_unit_number']), esc_html(Formatting::hectares((float) $unit['hectares'])));
         }
         return '<table><thead><tr><th>#</th><th>Land unit</th><th>Hectares</th></tr></thead><tbody>' . $rows . '</tbody></table>';
     }

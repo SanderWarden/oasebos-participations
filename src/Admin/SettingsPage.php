@@ -12,7 +12,7 @@ final class SettingsPage extends BasePage
         if (! current_user_can('manage_options')) { wp_die('Geen toegang'); }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Nonces::verifyAdmin();
-            foreach (['oasebos_mollie_api_key', 'oasebos_organization_name', 'oasebos_organization_address', 'oasebos_email_sender_name', 'oasebos_email_sender_address'] as $key) {
+            foreach (['oasebos_mollie_api_key', 'oasebos_organization_name', 'oasebos_organization_address', 'oasebos_email_sender_name', 'oasebos_email_sender_address', 'oasebos_mailchimp_api_key', 'oasebos_mailchimp_audience_id'] as $key) {
                 update_option($key, sanitize_text_field(wp_unslash($_POST[$key] ?? '')));
             }
             foreach (['oasebos_participation_success_page_id', 'oasebos_donation_success_page_id', 'oasebos_recurring_donation_success_page_id'] as $key) {
@@ -42,6 +42,10 @@ final class SettingsPage extends BasePage
         $this->card('E-mailafzender', function (): void {
             $this->field('oasebos_email_sender_name', 'Naam afzender e-mail', 'Bijvoorbeeld Stichting Oasebos.');
             $this->field('oasebos_email_sender_address', 'E-mailadres afzender', 'Gebruik een afzender op je eigen domein.');
+        });
+        $this->card('Mailchimp nieuwsbrief', function (): void {
+            $this->field('oasebos_mailchimp_api_key', 'Mailchimp API-sleutel', 'Plak hier je Mailchimp API key, bijvoorbeeld xxxxx-us21.');
+            $this->field('oasebos_mailchimp_audience_id', 'Mailchimp Audience ID', 'De Audience/List ID waar opt-ins aan toegevoegd moeten worden.');
         });
         $this->card('Participatienummers', function (): void {
             $this->numberField('oasebos_participation_start_number', 'Startnummer participaties', 'Nieuwe participatienummers worden als vijf cijfers getoond, bijvoorbeeld 00001 of 12345. Bestaande hogere nummers blijven leidend.', 1);

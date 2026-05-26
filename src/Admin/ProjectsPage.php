@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Oasebos\Participations\Admin;
 
+use Oasebos\Participations\Formatting;
 use Oasebos\Participations\Security\Nonces;
 use Oasebos\Participations\Security\Sanitizer;
 
@@ -102,8 +103,8 @@ final class ProjectsPage extends BasePage
             if (! empty($project['description'])) {
                 echo '<p>' . esc_html(wp_trim_words((string) $project['description'], 24)) . '</p>';
             }
-            echo '<dl><div><dt>Beschikbaar</dt><dd>' . esc_html(number_format_i18n((float) $project['available_hectares'], 2)) . ' ha</dd></div>';
-            echo '<div><dt>Eenheid</dt><dd>' . esc_html(number_format_i18n((float) $project['unit_size'], 4)) . ' ha</dd></div>';
+            echo '<dl><div><dt>Beschikbaar</dt><dd>' . esc_html(Formatting::hectares((float) $project['available_hectares'])) . ' ha</dd></div>';
+            echo '<div><dt>Eenheid</dt><dd>' . esc_html(Formatting::hectares((float) $project['unit_size'])) . ' ha</dd></div>';
             echo '<div><dt>Prijs</dt><dd>' . esc_html((string) $project['currency'] . ' ' . number_format_i18n((float) $project['price_per_unit'], 2)) . '</dd></div></dl>';
             echo '<span class="oasebos-admin-add-project ' . esc_attr($availableUnits < 1 ? 'is-disabled' : '') . '">+</span>';
             echo '</article>';
@@ -300,7 +301,7 @@ final class ProjectsPage extends BasePage
             $editUrl = admin_url('admin.php?page=oasebos-projects&edit=' . absint($project['id']));
             echo '<tr><td><strong>' . esc_html($project['name']) . '</strong><br><code>' . esc_html($project['slug']) . '</code></td>';
             echo '<td><span class="oasebos-status oasebos-status--' . esc_attr($project['status']) . '">' . esc_html(ucfirst($project['status'])) . '</span></td>';
-            echo '<td>' . esc_html(number_format_i18n($available, 2) . ' / ' . number_format_i18n($total, 2) . ' ha') . '<div class="oasebos-mini-meter"><span style="width:' . esc_attr((string) min(100, $percentage)) . '%"></span></div></td>';
+            echo '<td>' . esc_html(Formatting::hectares($available) . ' / ' . Formatting::hectares($total) . ' ha') . '<div class="oasebos-mini-meter"><span style="width:' . esc_attr((string) min(100, $percentage)) . '%"></span></div></td>';
             echo '<td>' . esc_html($project['currency'] . ' ' . number_format_i18n((float) $project['price_per_unit'], 2)) . '</td>';
             echo '<td>' . esc_html(((int) $project['agreement_template_id'] ? 'Overeenkomst' : '—') . ' / ' . ((int) $project['certificate_template_id'] ? 'Certificaat' : '—')) . '</td>';
             echo '<td><a class="button button-small" href="' . esc_url($editUrl) . '">Bewerken</a></td></tr>';

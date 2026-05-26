@@ -10,15 +10,53 @@ document.addEventListener("DOMContentLoaded",()=>{
       if(units>0){cart.set(card.getAttribute("data-project-id"),{id:card.getAttribute("data-project-id"),name:card.getAttribute("data-project-name")||"",unitSize:parseFloat(card.getAttribute("data-project-unit-size")||"0"),price:parseFloat(card.getAttribute("data-project-price")||"0"),currency:card.getAttribute("data-project-currency")||"EUR",units});}
     });
 
-    const amountLabel=(item)=>`${(item.units*item.unitSize).toLocaleString("nl-NL",{minimumFractionDigits:4,maximumFractionDigits:4})} ha`;
+    const unitLabel=(units)=>`${units} ${units===1?"eenheid":"eenheden"}`;
+    const compactHectares=(hectares)=>hectares.toLocaleString("nl-NL",{minimumFractionDigits:0,maximumFractionDigits:4,useGrouping:false});
+    const amountLabel=(item)=>`${compactHectares(item.units*item.unitSize)} ha`;
+    const hectaresLabel=(hectares)=>`${compactHectares(hectares)} ha`;
     const costLabel=(item)=>`${item.currency} ${(item.units*item.price).toLocaleString("nl-NL",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    const getMaxUnits=(card)=>{
+      const available=card.querySelector("[data-oasebos-project-available]");
+      const total=parseFloat(available?available.getAttribute("data-oasebos-project-available-total")||"0":"0");
+      const unitSize=parseFloat(card.getAttribute("data-project-unit-size")||"0");
+      return unitSize>0?Math.floor(total/unitSize):0;
+    };
+    const getCardData=(card)=>({id:card.getAttribute("data-project-id"),name:card.getAttribute("data-project-name")||"",unitSize:parseFloat(card.getAttribute("data-project-unit-size")||"0"),price:parseFloat(card.getAttribute("data-project-price")||"0"),currency:card.getAttribute("data-project-currency")||"EUR",units:0});
+    const setCardQuantity=(card,units)=>{
+      const quantity=card.querySelector("[data-oasebos-project-quantity]");
+      const quantityCount=card.querySelector("[data-oasebos-project-quantity-count]");
+      const available=card.querySelector("[data-oasebos-project-available]");
+      const addButton=card.querySelector("[data-oasebos-add-project]");
+      const increaseButton=card.querySelector("[data-oasebos-increase-project]");
+      if(addButton){addButton.hidden=units>0;}
+      if(available){
+        const total=parseFloat(available.getAttribute("data-oasebos-project-available-total")||"0");
+        const unitSize=parseFloat(card.getAttribute("data-project-unit-size")||"0");
+        const remaining=Math.max(0,total-(units*unitSize));
+        available.textContent=remaining<=0?"Uitverkocht":hectaresLabel(remaining);
+        card.classList.toggle("is-sold-out",remaining<=0);
+        if(addButton){addButton.setAttribute("aria-disabled",remaining<=0?"true":"false");}
+        if(increaseButton){increaseButton.disabled=remaining<=0;}
+      }
+      if(units>0){
+        card.classList.add("is-selected");
+        card.setAttribute("data-project-units",String(units));
+        if(quantity){quantity.hidden=false;}
+        if(quantityCount){quantityCount.textContent=String(units);}
+        return;
+      }
+      card.classList.remove("is-selected");
+      card.setAttribute("data-project-units","0");
+      if(quantity){quantity.hidden=true;}
+      if(quantityCount){quantityCount.textContent="0";}
+    };
     const syncBasket=()=>{
       let total=0;
       if(basketItems){basketItems.innerHTML="";}
       cart.forEach((item)=>{
         total+=item.units;
         const card=Array.from(landing.querySelectorAll("[data-project-id]")).find((candidate)=>candidate.getAttribute("data-project-id")===item.id);
-        if(card){card.classList.add("is-selected");card.setAttribute("data-project-units",String(item.units));}
+        if(card){setCardQuantity(card,item.units);}
         if(basketItems){
           const li=document.createElement("li");
           const name=document.createElement("span");
@@ -26,14 +64,17 @@ document.addEventListener("DOMContentLoaded",()=>{
           li.setAttribute("data-basket-project-id",item.id);
           name.textContent=item.name;
           const hectares=document.createElement("small");
-          hectares.textContent=amountLabel(item);
+          const unitCount=document.createElement("span");
+          unitCount.className="oasebos-unit-count";
+          unitCount.textContent=unitLabel(item.units);
+          hectares.append(unitCount,document.createTextNode(` · ${amountLabel(item)}`));
           name.appendChild(hectares);
           quantity.textContent=costLabel(item);
           li.append(name,quantity);
           basketItems.appendChild(li);
         }
       });
-      landing.querySelectorAll(".oasebos-project-card").forEach((card)=>{if(!cart.has(card.getAttribute("data-project-id"))){card.classList.remove("is-selected");card.setAttribute("data-project-units","0");}});
+      landing.querySelectorAll(".oasebos-project-card").forEach((card)=>{if(!cart.has(card.getAttribute("data-project-id"))){setCardQuantity(card,0);}});
       if(total===0&&basketItems){const li=document.createElement("li");li.className="oasebos-basket__empty";li.textContent="Je mandje is nog leeg.";basketItems.appendChild(li);}
       if(basketCount){basketCount.textContent=String(total);}
       if(proceed){
@@ -46,15 +87,21 @@ document.addEventListener("DOMContentLoaded",()=>{
       }
     };
 
-    landing.querySelectorAll("[data-oasebos-add-project]").forEach((button)=>{
+    landing.querySelectorAll("[data-oasebos-add-project],[data-oasebos-increase-project],[data-oasebos-decrease-project]").forEach((button)=>{
       button.addEventListener("click",(event)=>{
         const card=button.closest("[data-project-id]");
         if(!card){return;}
         event.preventDefault();
         const id=card.getAttribute("data-project-id");
-        const existing=cart.get(id)||{id,name:card.getAttribute("data-project-name")||"",unitSize:parseFloat(card.getAttribute("data-project-unit-size")||"0"),price:parseFloat(card.getAttribute("data-project-price")||"0"),currency:card.getAttribute("data-project-currency")||"EUR",units:0};
-        existing.units+=1;
-        cart.set(id,existing);
+        const existing=cart.get(id)||getCardData(card);
+        if(button.matches("[data-oasebos-decrease-project]")){
+          existing.units-=1;
+          if(existing.units<=0){cart.delete(id);}else{cart.set(id,existing);}
+        }else{
+          if(existing.units>=getMaxUnits(card)){syncBasket();return;}
+          existing.units+=1;
+          cart.set(id,existing);
+        }
         syncBasket();
       });
     });

@@ -37,7 +37,7 @@ final class TemplateRenderer
         return [
             'participant_first_name' => 'Ada', 'participant_last_name' => 'Lovelace', 'participant_full_name' => 'Ada Lovelace', 'participant_email' => 'ada@example.org',
             'participant_address' => 'Bosstraat 1', 'participant_postcode' => '1234 AB', 'participant_city' => 'Amsterdam', 'participant_country' => 'NL',
-            'project_name' => 'Oasebos Demo Bos', 'project_location' => 'Costa Rica', 'units' => '2', 'forest_piece_label' => '2 stukjes', 'unit_size' => '0.5000', 'total_hectares' => '1.0000',
+            'project_name' => 'Oasebos Demo Bos', 'project_location' => 'Costa Rica', 'units' => '2', 'forest_piece_label' => '2 stukjes', 'unit_size' => '0,5', 'total_hectares' => '1',
             'price_per_unit' => '50.00', 'total_amount' => '100.00', 'currency' => 'EUR', 'participation_number' => 'OASEBOS-P-2026-00001',
             'land_unit_numbers' => 'OASEBOS-DEMO-BOS-2026-000001, OASEBOS-DEMO-BOS-2026-000002', 'land_unit_count' => '2', 'land_unit_table' => '<table><tbody><tr><td>1</td><td>OASEBOS-DEMO-BOS-2026-000001</td><td>0.5000</td></tr><tr><td>2</td><td>OASEBOS-DEMO-BOS-2026-000002</td><td>0.5000</td></tr></tbody></table>',
             'agreement_date' => date_i18n(get_option('date_format')), 'payment_date' => date_i18n(get_option('date_format')),

@@ -7,5 +7,6 @@
     <p><label><?php esc_html_e('Voornaam', 'oasebos-participations'); ?><input name="first_name"></label></p>
     <p><label><?php esc_html_e('Achternaam', 'oasebos-participations'); ?><input name="last_name"></label></p>
     <p><label><?php esc_html_e('E-mail', 'oasebos-participations'); ?><input type="email" name="email" required></label></p>
+    <p><label class="oasebos-checkbox-label"><input type="checkbox" name="newsletter_opt_in" value="1"> <?php esc_html_e('Blijf op de hoogte met de nieuwsbrief', 'oasebos-participations'); ?></label></p>
     <p><button type="submit"><?php esc_html_e('Doneren', 'oasebos-participations'); ?></button></p>
 </form>

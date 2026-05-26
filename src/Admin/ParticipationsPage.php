@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Oasebos\Participations\Admin;
 
+use Oasebos\Participations\Formatting;
 use Oasebos\Participations\Security\Nonces;
 use Oasebos\Participations\Services\EmailService;
 
@@ -68,7 +69,7 @@ final class ParticipationsPage extends BasePage
         $this->statCard('Totaal participaties', (string) $total, 'Alle echte participatieaanvragen. Testen zijn uitgesloten.');
         $this->statCard('Betaald', (string) $paid, 'Bevestigde en verwerkte participaties.');
         $this->statCard('In afwachting', (string) $pending, 'Wacht op betalingsbevestiging.');
-        $this->statCard('Betaald hectares', number_format_i18n($hectares, 2), 'Totaal beschermde hectares uit betaalde participaties.');
+        $this->statCard('Betaald hectares', Formatting::hectares($hectares), 'Totaal beschermde hectares uit betaalde participaties.');
         $this->statCard('Betaald revenue', '€ ' . number_format_i18n($amount, 2), 'Brutobedrag uit betaalde participaties.');
         $this->statCard('Testen', (string) $test, 'Testparticipaties zichtbaar in de lijst, maar uitgesloten van registry en totals.');
         echo '</div>';
@@ -132,7 +133,7 @@ final class ParticipationsPage extends BasePage
             $this->detailItem('E-mail ontvanger', (string) ($gift['email'] ?? '—'));
         }
         $this->detailItem('Eenheden', (string) $participation['units']);
-        $this->detailItem('Hectares', number_format_i18n((float) $participation['total_hectares'], 4));
+        $this->detailItem('Hectares', Formatting::hectares((float) $participation['total_hectares']));
         $this->detailItem('Totaalbedrag', esc_html($participation['currency']) . ' ' . number_format_i18n((float) $participation['total_amount'], 2));
         $this->detailItem('Mollie-betaling', (string) ($participation['mollie_payment_id'] ?: '—'));
         $this->detailItem('Betaald at', (string) ($participation['paid_at'] ?: '—'));
@@ -191,7 +192,7 @@ final class ParticipationsPage extends BasePage
 
         echo '<table class="widefat striped"><thead><tr><th>#</th><th>Landnummer</th><th>Hectares</th><th>Status</th></tr></thead><tbody>';
         foreach ($landUnits as $unit) {
-            echo '<tr><td>' . esc_html((string) $unit['unit_index']) . '</td><td><strong>' . esc_html((string) $unit['land_unit_number']) . '</strong></td><td>' . esc_html(number_format_i18n((float) $unit['hectares'], 4)) . '</td><td>' . $this->statusBadge((string) $unit['status']) . '</td></tr>';
+            echo '<tr><td>' . esc_html((string) $unit['unit_index']) . '</td><td><strong>' . esc_html((string) $unit['land_unit_number']) . '</strong></td><td>' . esc_html(Formatting::hectares((float) $unit['hectares'])) . '</td><td>' . $this->statusBadge((string) $unit['status']) . '</td></tr>';
         }
         echo '</tbody></table></div>';
     }
@@ -214,7 +215,7 @@ final class ParticipationsPage extends BasePage
             echo '<td>' . esc_html((string) ($project['name'] ?? 'Onbekend project')) . '</td>';
             echo '<td>' . $this->statusBadge((string) $participation['status']) . '</td>';
             echo '<td>' . esc_html((string) $participation['units']) . '</td>';
-            echo '<td>' . esc_html(number_format_i18n((float) $participation['total_hectares'], 4)) . '</td>';
+            echo '<td>' . esc_html(Formatting::hectares((float) $participation['total_hectares'])) . '</td>';
             echo '<td>' . esc_html($participation['currency'] . ' ' . number_format_i18n((float) $participation['total_amount'], 2)) . '</td>';
             echo '<td>' . esc_html(mysql2date(get_option('date_format'), (string) $participation['created_at'])) . '</td>';
             echo '<td><a class="button button-small" href="' . esc_url($viewUrl) . '">Bekijken</a></td></tr>';

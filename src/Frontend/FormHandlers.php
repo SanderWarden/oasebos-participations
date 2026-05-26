@@ -7,6 +7,7 @@ use Oasebos\Participations\Database\Repository;
 use Oasebos\Participations\Security\Nonces;
 use Oasebos\Participations\Security\Sanitizer;
 use Oasebos\Participations\Services\DonationService;
+use Oasebos\Participations\Services\MailchimpService;
 use Oasebos\Participations\Services\MollieService;
 use Oasebos\Participations\Services\ParticipationService;
 use Oasebos\Participations\Services\RecurringDonationService;
@@ -56,6 +57,15 @@ final class FormHandlers
         return add_query_arg(['oasebos_payment_return' => 1], home_url('/'));
     }
 
+    private function subscribeToNewsletterIfRequested(string $email, string $firstName = '', string $lastName = ''): void
+    {
+        if (empty($_POST['newsletter_opt_in'])) {
+            return;
+        }
+
+        (new MailchimpService())->subscribe($email, $firstName, $lastName);
+    }
+
     public function participation(): void
     {
         $this->verify();
@@ -63,7 +73,10 @@ final class FormHandlers
         try {
             $repo = new Repository();
             $isGift = ! empty($_POST['is_gift']);
-            $isTest = ! empty($_POST['is_test']) && (current_user_can('manage_oasebos') || current_user_can('manage_options'));
+            $isTest = get_option('oasebos_mollie_test_mode') === '1';
+            $firstName = Sanitizer::text('first_name', $_POST);
+            $lastName = Sanitizer::text('last_name', $_POST);
+            $email = sanitize_email(wp_unslash($_POST['email'] ?? ''));
             $giftData = $isGift ? [
                 'is_gift' => true,
                 'gift_first_name' => Sanitizer::text('gift_first_name', $_POST),
@@ -82,9 +95,9 @@ final class FormHandlers
                     $participationIds[] = $participationService->createPending(array_merge([
                         'project_id' => $projectId,
                         'units' => max(1, (int) ($basketUnits[$index] ?? 1)),
-                        'first_name' => Sanitizer::text('first_name', $_POST),
-                        'last_name' => Sanitizer::text('last_name', $_POST),
-                        'email' => sanitize_email(wp_unslash($_POST['email'] ?? '')),
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'email' => $email,
                         'phone' => Sanitizer::text('phone', $_POST),
                         'address' => Sanitizer::text('address', $_POST),
                         'postcode' => Sanitizer::text('postcode', $_POST),
@@ -98,9 +111,9 @@ final class FormHandlers
                 $participationIds[] = $participationService->createPending(array_merge([
                 'project_id' => Sanitizer::int('project_id', $_POST),
                 'units' => Sanitizer::int('units', $_POST, 1),
-                'first_name' => Sanitizer::text('first_name', $_POST),
-                'last_name' => Sanitizer::text('last_name', $_POST),
-                'email' => sanitize_email(wp_unslash($_POST['email'] ?? '')),
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'email' => $email,
                 'phone' => Sanitizer::text('phone', $_POST),
                 'address' => Sanitizer::text('address', $_POST),
                 'postcode' => Sanitizer::text('postcode', $_POST),
@@ -109,6 +122,8 @@ final class FormHandlers
                 'is_test' => $isTest,
                 ], $giftData));
             }
+
+            $this->subscribeToNewsletterIfRequested($email, $firstName, $lastName);
 
             $id = (int) $participationIds[0];
             $p = $repo->get('participations', $id);
@@ -135,11 +150,15 @@ final class FormHandlers
         $this->verify();
         $repo = new Repository();
         $amount = Sanitizer::text('amount', $_POST) === 'custom' ? Sanitizer::money('custom_amount', $_POST) : Sanitizer::money('amount', $_POST);
+        $firstName = Sanitizer::text('first_name', $_POST);
+        $lastName = Sanitizer::text('last_name', $_POST);
+        $email = sanitize_email(wp_unslash($_POST['email'] ?? ''));
+        $this->subscribeToNewsletterIfRequested($email, $firstName, $lastName);
         if (! empty($_POST['is_monthly'])) {
             $id = (new RecurringDonationService($repo))->createPending([
-                'first_name' => Sanitizer::text('first_name', $_POST),
-                'last_name' => Sanitizer::text('last_name', $_POST),
-                'email' => sanitize_email(wp_unslash($_POST['email'] ?? '')),
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'email' => $email,
                 'amount' => $amount,
                 'interval' => '1 month',
             ]);
@@ -149,9 +168,9 @@ final class FormHandlers
             $this->redirectToCheckout((string) $payment['checkout_url']);
         }
         $id = (new DonationService($repo))->createPending([
-            'first_name' => Sanitizer::text('first_name', $_POST),
-            'last_name' => Sanitizer::text('last_name', $_POST),
-            'email' => sanitize_email(wp_unslash($_POST['email'] ?? '')),
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => $email,
             'amount' => $amount,
             'message' => Sanitizer::textarea('message', $_POST),
         ]);
@@ -168,10 +187,14 @@ final class FormHandlers
     {
         $this->verify();
         $repo = new Repository();
+        $firstName = Sanitizer::text('first_name', $_POST);
+        $lastName = Sanitizer::text('last_name', $_POST);
+        $email = sanitize_email(wp_unslash($_POST['email'] ?? ''));
+        $this->subscribeToNewsletterIfRequested($email, $firstName, $lastName);
         $id = (new RecurringDonationService($repo))->createPending([
-            'first_name' => Sanitizer::text('first_name', $_POST),
-            'last_name' => Sanitizer::text('last_name', $_POST),
-            'email' => sanitize_email(wp_unslash($_POST['email'] ?? '')),
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => $email,
             'amount' => Sanitizer::money('amount', $_POST),
             'interval' => Sanitizer::text('interval', $_POST, '1 month'),
         ]);

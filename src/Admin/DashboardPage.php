@@ -21,6 +21,7 @@ final class DashboardPage extends BasePage
 
         echo '<div class="wrap oasebos-admin-page oasebos-dashboard-page">';
         $this->header('Oasebos dashboard', 'Beheer projecten, participaties, donaties, periodieke steun en operationele controle vanuit één overzicht.');
+        echo '<p class="oasebos-version">Plugin versie: <strong>' . esc_html((string) OASEBOS_PARTICIPATIONS_VERSION) . '</strong></p>';
         echo '<div class="oasebos-dashboard-grid">';
         foreach ($counts as $label => [$table, $icon, $url]) {
             $count = $table === 'participations' ? $this->repo->count($table, 'is_test = 0') : $this->repo->count($table);
